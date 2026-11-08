@@ -109,6 +109,15 @@ WEBHOOK_ALLOW_QUERY_TOKEN=1           # Emby Webhook 插件只能配 ?token= URL
 
 默认拉取 `2.6`；在 `.env` 里设 `IMAGE_TAG` 可指定历史版本（如 `IMAGE_TAG=1.9.10`）或 `latest`。已发布版本见 [Releases](https://github.com/Abson2/embyhub/releases)。
 
+镜像同时发布在两处，**均为公开仓库，无需登录、直接拉取**；两者内容完全相同（同一镜像 digest）：
+
+```bash
+docker pull abson2/embyhub:2.6            # Docker Hub（compose 默认）
+docker pull ghcr.io/abson2/embyhub:2.6    # GHCR 备用
+```
+
+每次打 `v*` tag 发版，CI 在同一次运行中同步推送两处镜像并创建 GitHub Release——Release 出现时镜像已可拉取。CI 会自动把两个仓库设为公开并做匿名拉取自检，无需任何手动配置。
+
 ```yaml
 services:
   embyhub:

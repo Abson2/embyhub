@@ -33,7 +33,8 @@ DOMAIN_EXEMPT_FILES = {"uv.lock", "requirements.txt", "pyproject.toml",
 DOMAIN_ALLOW = {
     "example.com", "example.org", "example.net", "localhost",
     "github.com", "githubusercontent.com", "github.io", "ghcr.io",
-    "docker.io", "python.org", "pypi.org", "pythonhosted.org",
+    # Docker Hub API（CI 自动把镜像仓库设为公开，需调用 users/login 与 repositories PATCH）
+    "docker.io", "hub.docker.com", "python.org", "pypi.org", "pythonhosted.org",
     "readthedocs.io", "ietf.org", "rfc-editor.org", "apache.org",
     "astral.sh", "ubuntu.com", "debian.org",
     # Bark 官方公共推送服务默认地址（系统级推送配置说明），非个人配置

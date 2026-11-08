@@ -13,11 +13,16 @@ on:
 
 permissions:
   contents: write
-  # 2.6 起镜像发布到 Docker Hub，packages 权限不再需要（保留不影响 GHCR 历史包）
+  packages: write   # 2.6：双注册表发布，GHCR 推送与公开化需要
 
+# 发版链路：push v* tag -> 本 run 内构建并同步推送 Docker Hub + GHCR -> 冒烟
+# -> 自动公开两个仓库 -> 匿名拉取自检 -> release job 创建 GitHub Release。
+# 即 Release 出现时，两处镜像均已可免登录拉取，无需任何人工同步。
 env:
   # 2.6：Docker Hub 两段式地址，与 walkingd/tgto123 同构
   IMAGE_NAME: abson2/embyhub
+  # 同一份镜像同步发布到 GitHub Container Registry，供两处免登录拉取
+  GHCR_IMAGE: ghcr.io/abson2/embyhub
 
 jobs:
   verify:
@@ -128,6 +133,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: 计算无 v 前缀版本号
         id: ver
         # v2.6 这类两段式版本号不满足 semver，type=semver 会静默不产出 tag，
@@ -139,7 +151,10 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_NAME }}
+          # 一行一个注册表，metadata-action 会为每个 image 生成整套 tags
+          images: |
+            ${{ env.IMAGE_NAME }}
+            ${{ env.GHCR_IMAGE }}
           tags: |
             type=raw,value=latest
             type=ref,event=tag
@@ -221,13 +236,72 @@ jobs:
           echo "SMOKE PASSED"
           docker logs ep-smoke 2>&1 | tail -30 || true
 
+      # docker push 自动创建的仓库继承 namespace 默认隐私（可能是 Private），
+      # GHCR 包首次推送也默认是 Private：两者都会让部署者 docker pull 报 401。
+      # 这里在发版流程内自动改为公开，并用匿名拉取硬验证，用户无需任何手动设置。
+      - name: 确保 Docker Hub 仓库公开
+        env:
+          DH_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          DH_PAT: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.error, urllib.request
+          user, pat = os.environ["DH_USER"], os.environ["DH_PAT"]
+
+          def call(url, payload=None, headers=None, method="GET"):
+              data = json.dumps(payload).encode() if payload is not None else None
+              req = urllib.request.Request(
+                  url, data=data, method=method,
+                  headers={"Content-Type": "application/json", **(headers or {})})
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  raw = r.read().decode()
+                  return json.loads(raw) if raw.strip() else {}
+
+          token = call("https://hub.docker.com/v2/users/login/",
+                       {"username": user, "password": pat}, method="POST")["token"]
+          url = "https://hub.docker.com/v2/repositories/%s/embyhub/" % user
+          ok_scheme, last = None, None
+          for scheme in ("JWT ", "Bearer "):
+              try:
+                  call(url, {"is_private": False},
+                       {"Authorization": scheme + token}, method="PATCH")
+                  ok_scheme = scheme
+                  print("PATCH ok with", scheme.strip())
+                  break
+              except urllib.error.HTTPError as e:
+                  last = (scheme.strip(), e.code, e.read().decode()[:200])
+                  print("PATCH failed:", last)
+          if not ok_scheme:
+              raise SystemExit("无法设置 Docker Hub 可见性: %r" % (last,))
+          info = call(url, headers={"Authorization": ok_scheme + token})
+          print("is_private =", info.get("is_private"))
+          assert info.get("is_private") is False, "Docker Hub 仓库仍为 private"
+          PY
+
+      - name: 确保 GHCR 包公开
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api -X PATCH -H "Accept: application/vnd.github+json" \
+            "/user/packages/container/embyhub/visibility" \
+            -f visibility=public
+
+      - name: 匿名拉取自检（部署者无需登录）
+        run: |
+          set -e
+          docker logout docker.io >/dev/null 2>&1 || true
+          docker logout ghcr.io >/dev/null 2>&1 || true
+          docker pull "${{ env.IMAGE_NAME }}:latest"
+          docker pull "${{ env.GHCR_IMAGE }}:latest"
+
       - name: 清理
         if: always()
         run: docker rm -f ep-smoke || true
 
   alias:
-    name: 补推无 v 前缀版本别名（仅手动触发）
+    name: 补齐双注册表版本别名（仅手动触发）
     if: github.event_name == 'workflow_dispatch' && inputs.alias_version != ''
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Set up Docker Buildx
@@ -239,14 +313,24 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 直接复制已有 manifest，不重新构建，秒级完成；用于修复历史两段式版本 tag 缺失。
-      - name: 从 v 前缀 tag 复制 manifest
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 直接复制已有 manifest，不重新构建；同时把历史 tag 事件只推到
+      # Docker Hub 的版本补齐到 GHCR，保证两处版本名一致。
+      - name: 从 v 前缀 tag 复制 manifest（双注册表）
         run: |
           set -e
-          SRC="abson2/embyhub:v${{ inputs.alias_version }}"
-          DST="abson2/embyhub:${{ inputs.alias_version }}"
-          docker buildx imagetools create --tag "$DST" "$SRC"
-          docker buildx imagetools inspect "$DST"
+          V="${{ inputs.alias_version }}"
+          SRC="abson2/embyhub:v$V"
+          docker buildx imagetools create --tag "abson2/embyhub:$V" "$SRC"
+          docker buildx imagetools create --tag "ghcr.io/abson2/embyhub:v$V" "$SRC"
+          docker buildx imagetools create --tag "ghcr.io/abson2/embyhub:$V" "$SRC"
+          docker buildx imagetools inspect "ghcr.io/abson2/embyhub:$V"
 
   release:
     name: 创建 GitHub Release（仅 tag 触发）
