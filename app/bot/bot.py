@@ -382,7 +382,7 @@ def api_test_wecom(request: Request):
             access_token,
             {
                 "touser": touser, "msgtype": "markdown", "agentid": int(agentid),
-                "markdown": {"content": "🎉 <font color=\"info\">企业微信通道测试成功！</font>\n\n> EmbyPulse 已成功接入代理推送与双向交互通道。"}
+                "markdown": {"content": "🎉 <font color=\"info\">企业微信通道测试成功！</font>\n\n> EmbyHub 已成功接入代理推送与双向交互通道。"}
             },
             timeout=10,
         ).json()
@@ -415,7 +415,7 @@ async def api_test_channel(request: Request):
             token,
             {
                 "chat_id": chat_id,
-                "text": f"📢 <b>频道通知测试成功</b>\n\n频道: {name or chat_id}\n时间: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n✅ EmbyPulse 已成功连接到此频道，入库通知将推送到这里。",
+                "text": f"📢 <b>频道通知测试成功</b>\n\n频道: {name or chat_id}\n时间: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n✅ EmbyHub 已成功连接到此频道，入库通知将推送到这里。",
                 "parse_mode": "HTML"
             },
             proxies=proxies,
@@ -478,7 +478,7 @@ async def telegram_webhook(request: Request):
                         msg += f"🎬 <b>{item['Name']}</b> ({item.get('ProductionYear', 'N/A')})\n🔗 <a href='{link}'>点击播放</a>\n\n"
                     send_tg_msg(chat_id, msg)
         elif text == "/start":
-            send_tg_msg(chat_id, "👋 欢迎使用 EmbyPulse 机器人！\n支持指令:\n/search <关键词> - 搜索资源")
+            send_tg_msg(chat_id, "👋 欢迎使用 EmbyHub 机器人！\n支持指令:\n/search <关键词> - 搜索资源")
     return {"status": "success"}
 
 def search_emby(keyword):

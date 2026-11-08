@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 #
-# emby-pulse 安全加固独立版 —— 基于本仓库完整源码自行构建。
+# embyhub 安全加固独立版 —— 基于本仓库完整源码自行构建。
 # 不是 fork，不引用上游镜像，源码与构建流程全部自持。
 #
 # 相对上游 Dockerfile 的改动：
@@ -28,7 +28,7 @@ RUN python -m compileall -b app/ && \
 FROM python:3.12-slim
 WORKDIR /workspace
 
-ENV APP_VERSION=2.5.1-hardened \
+ENV APP_VERSION=2.6-hardened \
     TZ=Asia/Shanghai \
     PATH="/workspace/.venv/bin:$PATH" \
     UV_COMPILE_BYTECODE=1 \
@@ -38,9 +38,9 @@ ENV APP_VERSION=2.5.1-hardened \
     AUTH_GATE_MODE=enforce \
     WEBHOOK_ALLOW_QUERY_TOKEN=1
 
-LABEL org.opencontainers.image.title="emby-pulse hardened" \
+LABEL org.opencontainers.image.title="embyhub hardened" \
       org.opencontainers.image.description="Independent hardened build: Cloudflare Tunnel CSRF fix, default-deny API gate, Emby webhook ?token= compatibility, system-level Bark push" \
-      org.opencontainers.image.source="https://github.com/Abson2/emby-pulse"
+      org.opencontainers.image.source="https://github.com/Abson2/embyhub"
 
 # 按锁文件安装依赖，利用层缓存
 COPY --from=ghcr.io/astral-sh/uv:0.11.7 /uv /uvx /bin/

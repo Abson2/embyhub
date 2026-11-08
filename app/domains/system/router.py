@@ -265,7 +265,7 @@ def api_get_settings(request: Request):
     )
     result_data["webhook_header_name"] = "X-Webhook-Token"
     result_data["webhook_query_token_enabled"] = True
-    result_data["webhook_token_available"] = bool(webhook_token and webhook_token != "embypulse" and webhook_token not in ("emby", "test", "123456", "password"))
+    result_data["webhook_token_available"] = bool(webhook_token and webhook_token != "embyhub" and webhook_token not in ("emby", "test", "123456", "password"))
     
     return {"status": "success", "data": result_data}
 

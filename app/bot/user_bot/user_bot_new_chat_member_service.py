@@ -31,7 +31,7 @@ def _bot_id_from_token():
 
 def _default_welcome_message(group_name):
     return (
-        f"👋 你好！我是 EmbyPulse 用户机器人，已加入 <b>{group_name}</b>\n\n"
+        f"👋 你好！我是 EmbyHub 用户机器人，已加入 <b>{group_name}</b>\n\n"
         "✅ 发送 /checkin 或 /签到 获取积分\n"
         "✅ 发送 /help 查看群内可用指令\n\n"
         "💡 更多功能请私聊机器人使用"

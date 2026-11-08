@@ -7,7 +7,7 @@
 
 职责边界（与插件 B 的分工）
 ---------------------------
-- 插件 A（本文件，运行在 EMBYPULSE 侧）：
+- 插件 A（本文件，运行在 EMBYHUB 侧）：
   1) 推送：把工单大厅里**审批通过 / 手动接单**的求片，按 TMDB 编号写入飞牛上
      TgtoDrive 的「光鸭云盘 → 频道监控配置 → 关键词过滤 → 关键词白名单」，
      触发 tg 频道监控入库。合并写入时完整保留用户已有的其它关键词。
@@ -16,13 +16,13 @@
      完整保留其它所有规则。GET 失败 / 空配置 / 结构未知 / 未命中一律不 POST。
 - 插件 B（运行在 TgtoDrive 容器内，仓库 tgtdrive-monitor/）：按「影视已入库 Emby」
   判定完结，完结满 cleanup_days(默认5) 天后，删除本插件写入的 kw_ 前缀关键词。
-  **插件 B 不感知 EMBYPULSE 工单删除事件**（工单删除后 DAO 行即消失，插件 B
+  **插件 B 不感知 EMBYHUB 工单删除事件**（工单删除后 DAO 行即消失，插件 B
   下次周期运行时无从判断该规则该删还是该留）。
 
 为什么两条删除路径并存
 ----------------------
 插件 B 是「入库完结 → 周期清理」，插件 A 的删单联动是「工单删除 → 即时清理」，
-触发条件与时机完全不同，互不替代、互不冲突。早期版本在 EMBYPULSE 侧做「完结
+触发条件与时机完全不同，互不替代、互不冲突。早期版本在 EMBYHUB 侧做「完结
 清理」，因全量覆盖写会冲掉用户通过 TgtoDrive 页面手动添加的关键词（坑①）。
 因此插件 A 的移除能力被严格限定为：只删本插件 kw_ 规则、只在明确的删除事件下、
 且绝不从零创建场景、绝不写空规则列表。
@@ -39,7 +39,7 @@
   - 审批通过(approve) → status=1（自动下载中），并推送；
   - 手动接单(manual)  → status=4（手动接单中），并推送；推送成功后流转为 status=1（自动下载中）；
   - 审批拒绝(reject)  → 不推送，流程流转为 status=3（已拒绝）。
-- **入库流转**由 EMBYPULSE 核心负责：Emby webhook 触发 `auto_finish_request` 把 status 置 2
+- **入库流转**由 EMBYHUB 核心负责：Emby webhook 触发 `auto_finish_request` 把 status 置 2
   （已入库）并通知管理员/用户。本插件不重复实现。
 - **轻量轮询兜底**：后台每 check_interval 分钟扫描一次 status∈(1,4) 的工单补推，仅作容错。
 
@@ -131,7 +131,7 @@ logger = logging.getLogger("uvicorn")
 # 不含 7(待入库) —— 7 表示内容已转存完等待 Emby 入库，入库流转由核心 auto_finish 负责。
 PENDING_STATUS = (1, 4)
 
-# 审批通过后 EMBYPULSE 写入的状态码（management_router: approve -> update_status(tid, sn, 1)）
+# 审批通过后 EMBYHUB 写入的状态码（management_router: approve -> update_status(tid, sn, 1)）
 STATUS_APPROVED = 1
 # 推送成功后工单流转到的状态（自动下载中）。
 STATUS_AUTO_DOWNLOADING = 1
@@ -183,7 +183,7 @@ class TgtoDriveError(Exception):
     """TgtoDrive 调用失败"""
 
 
-# Docker 默认桥网关：host 网络模式的 TgtoDrive 从 bridge 网络的 EMBYPULSE 看过去，
+# Docker 默认桥网关：host 网络模式的 TgtoDrive 从 bridge 网络的 EMBYHUB 看过去，
 # 稳定地址是宿主网关 172.17.0.1，而非 NAS 的 LAN IP（后者会因 DHCP / 换网而变）。
 # 注意：本文件位于 app/ 目录，受 check-no-secrets 的 DOMAIN_EXEMPT_TOP 豁免，
 # 此处字面量 IP 不会触发凭证扫描。其它目录（如 tgtdrive-monitor/）一律只用 127.0.0.1。
@@ -196,7 +196,7 @@ def _resolve_base_url(cfg):
     优先级：
       1. 插件配置 UI 显式填写的 tgtdrive_base_url（最高优先，便于临时覆盖）；
       2. 环境变量 TGTODRIVE_URL（在 docker-compose.yml 一处配置，容器重建不丢）；
-      3. 本地配置文件 <dir>/tgtodrive.json 的 base_url（EMBYPULSE 配置目录内）；
+      3. 本地配置文件 <dir>/tgtodrive.json 的 base_url（EMBYHUB 配置目录内）；
       4. 默认值 DEFAULT_TGTODRIVE_URL（docker 宿主网关，host 网络 TgtoDrive 稳定地址）。
 
     注意：env 与候选目录均在调用时求值，便于容器启动时再注入环境变量。
@@ -957,7 +957,7 @@ class TgWhitelistSyncPlugin(PluginBase):
 
     # ------------------------------------------------------------ 轮询主循环（仅推送兜底）
     def _loop(self):
-        # 启动后稍等，避免与 EMBYPULSE 自身初始化抢资源
+        # 启动后稍等，避免与 EMBYHUB 自身初始化抢资源
         if self._stop_event.wait(30):
             return
         while self._running and self._enabled:

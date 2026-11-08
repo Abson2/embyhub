@@ -1,12 +1,12 @@
-# 🛡️ emby-pulse 安全加固独立版（基于 EmbyPulse）
+# 🛡️ embyhub 安全加固独立版（基于 EmbyPulse）
 
 <div align="center">
-  <img src="static/img/logo-light.png" alt="EmbyPulse Logo" width="180" />
+  <img src="static/img/logo-light.png" alt="EmbyHub Logo" width="180" />
 
   <h3>Emby 服务器的高级伴侣：数据洞察、全能管理与下载自动化助手 · 安全加固独立发行版</h3>
 
   <p align="center">
-    <a href="https://github.com/Abson2/emby-pulse"><img src="static/img/github-mark.svg" alt="GitHub" width="16" height="16" valign="middle" /> 本项目仓库</a>
+    <a href="https://github.com/Abson2/embyhub"><img src="static/img/github-mark.svg" alt="GitHub" width="16" height="16" valign="middle" /> 本项目仓库</a>
     &nbsp;·&nbsp;
     <a href="https://github.com/zeyu8023/emby-pulse">源项目 1 · zeyu8023/emby-pulse</a>
     &nbsp;·&nbsp;
@@ -14,10 +14,10 @@
   </p>
 </div>
 
-> **镜像**：`ghcr.io/abson2/emby-pulse-hardened:latest`
+> **镜像**：`abson2/embyhub:latest`
 > **仓库性质**：独立公开仓库（非 fork、无 upstream 同步），源码 / Dockerfile / compose / CI 全自持。
 > **配置隔离**：仓库不含运行期配置、数据库、密钥、域名或个人数据，CI 首步强制扫描。
-> **版本说明**：本页只列功能与用法；各版本的详细更新说明见 [CHANGELOG](CHANGELOG.md) 与 [GitHub Releases](https://github.com/Abson2/emby-pulse/releases)。
+> **版本说明**：本页只列功能与用法；各版本的详细更新说明见 [CHANGELOG](CHANGELOG.md) 与 [GitHub Releases](https://github.com/Abson2/embyhub/releases)。
 
 ---
 
@@ -107,13 +107,13 @@ WEBHOOK_ALLOW_QUERY_TOKEN=1           # Emby Webhook 插件只能配 ?token= URL
 
 ### 3.2 镜像与版本锁定
 
-默认拉取 `2.5.1`；在 `.env` 里设 `IMAGE_TAG` 可指定历史版本（如 `IMAGE_TAG=1.9.10`）或 `latest`。已发布版本见 [Releases](https://github.com/Abson2/emby-pulse/releases)。
+默认拉取 `2.6`；在 `.env` 里设 `IMAGE_TAG` 可指定历史版本（如 `IMAGE_TAG=1.9.10`）或 `latest`。已发布版本见 [Releases](https://github.com/Abson2/embyhub/releases)。
 
 ```yaml
 services:
-  embypulse-pro:
-    image: ghcr.io/abson2/emby-pulse-hardened:${IMAGE_TAG:-2.5.1}
-    container_name: embypulse-pro
+  embyhub:
+    image: abson2/embyhub:${IMAGE_TAG:-2.6}
+    container_name: embyhub
     restart: unless-stopped
     ports:
       - "10307:10307"   # 管理端（建议仅内网）
@@ -163,8 +163,8 @@ docker compose up -d
 ### 3.7 从源码构建
 
 ```bash
-git clone https://github.com/Abson2/emby-pulse.git
-cd emby-pulse
+git clone https://github.com/Abson2/embyhub.git
+cd embyhub
 cp .env.example .env
 docker compose up -d
 ```

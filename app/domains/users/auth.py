@@ -1064,7 +1064,7 @@ async def totp_setup(request: Request):
     secret = pyotp.random_base32()
     
     # 生成 provisioning URL（验证器扫码用）
-    app_name = "EmbyPulse"
+    app_name = "EmbyHub"
     username = user.get("name", "user")
     provisioning_url = pyotp.totp.TOTP(secret).provisioning_uri(
         name=username,

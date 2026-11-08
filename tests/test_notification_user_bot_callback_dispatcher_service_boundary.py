@@ -54,7 +54,7 @@ def test_callback_dispatcher_preserves_unbound_back_menu_and_state_clear(monkeyp
     assert edits == [(
         "10",
         20,
-        "👋 你好 <b>Alice</b>！\n\n🎬 这是 <b>EmbyPulse</b> 用户自助服务机器人\n\n请先完成绑定或注册：",
+        "👋 你好 <b>Alice</b>！\n\n🎬 这是 <b>EmbyHub</b> 用户自助服务机器人\n\n请先完成绑定或注册：",
         {"binding": None},
     )]
     assert sent == []

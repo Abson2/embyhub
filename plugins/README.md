@@ -1,6 +1,6 @@
 # 官方插件发布窗口
 
-本目录是 **emby-pulse 主体项目的插件发布窗口**。2.3 起，插件中心的「从 GitHub 导入」只读取这里的索引与产物；未来新增插件**只需改本目录，无需改动主体代码**。
+本目录是 **embyhub 主体项目的插件发布窗口**。2.3 起，插件中心的「从 GitHub 导入」只读取这里的索引与产物；未来新增插件**只需改本目录，无需改动主体代码**。
 
 当前已发布一个官方示例 `hello_plugin`（源码见 `examples/hello_plugin/`），可直接在插件中心「GitHub 官方索引」里拉取验证整条链路；它只提供一个只读 API，默认禁用，无副作用。
 
@@ -43,7 +43,7 @@ plugins/
 
 | 项 | 规则 |
 | --- | --- |
-| 仓库 | 默认仅 `Abson2/emby-pulse`；可用 `PLUGIN_GITHUB_REPOS` 追加白名单 |
+| 仓库 | 默认仅 `Abson2/embyhub`；可用 `PLUGIN_GITHUB_REPOS` 追加白名单 |
 | 分支 / tag | `PLUGIN_GITHUB_REF`，默认 `main`；只允许 `[A-Za-z0-9._-]{1,64}` |
 | 索引地址 | 服务端固定拼接 `https://raw.githubusercontent.com/<repo>/<ref>/plugins/index.json` |
 | 产物地址 | 条目 `download` 必须是仓库内 `.zip` 相对路径，禁止 `..`、`://`、绝对路径 |

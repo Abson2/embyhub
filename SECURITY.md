@@ -2,9 +2,9 @@
 
 ## 威胁模型
 
-本发行版针对的是「把 emby-pulse 通过 Cloudflare Tunnel / 反向代理暴露到公网」这一部署形态。在该形态下，浏览器页面是 https，而回源是 http，代理头处理不当会同时影响功能正确性与凭证边界。
+本发行版针对的是「把 embyhub 通过 Cloudflare Tunnel / 反向代理暴露到公网」这一部署形态。在该形态下，浏览器页面是 https，而回源是 http，代理头处理不当会同时影响功能正确性与凭证边界。
 
-**两条链路要分开看**：管理端 / 用户端是「浏览器 ↔ 公网反代」链路，适用上面的公网威胁模型；而 **Webhook 回调是「Emby Server ↔ EMBYPULSE」的内网直连**（`http://<内网IP>:10307/api/v1/webhook?token=...`），由服务端直接发起，不经过浏览器、CDN 或公网反代，因此不存在浏览器历史、书签、Referer、公网反代日志这些凭证扩散面。这也是 1.9.0 起可以默认兼容 `?token=` 的前提。管理端暴露到公网，不等于 Webhook 回调经过公网。
+**两条链路要分开看**：管理端 / 用户端是「浏览器 ↔ 公网反代」链路，适用上面的公网威胁模型；而 **Webhook 回调是「Emby Server ↔ EMBYHUB」的内网直连**（`http://<内网IP>:10307/api/v1/webhook?token=...`），由服务端直接发起，不经过浏览器、CDN 或公网反代，因此不存在浏览器历史、书签、Referer、公网反代日志这些凭证扩散面。这也是 1.9.0 起可以默认兼容 `?token=` 的前提。管理端暴露到公网，不等于 Webhook 回调经过公网。
 
 ### 本次修复覆盖
 
@@ -57,7 +57,7 @@
 ## 凭证处理
 
 - Webhook 凭证优先走 `X-Webhook-Token` 请求头；**1.9.0 起默认同时兼容 `?token=` URL**，因为 Emby Webhook 插件无法附带自定义请求头。后端仍不向前端回传明文 Token，设置页也绝不把脱敏值拼进地址。
-- **兼容 `?token=` 的残余风险（内网拓扑下很低）**：Webhook 是内网服务端直连，凭证不会进入浏览器历史 / 书签 / Referer / 公网反代日志；唯一残留是 **EMBYPULSE 本机的 uvicorn 访问日志**（记录带 query 的路径），只在内网设备本地。只要 10307 不对公网暴露且本机日志不外发，无需额外处理，也无需为此改用 Header。
+- **兼容 `?token=` 的残余风险（内网拓扑下很低）**：Webhook 是内网服务端直连，凭证不会进入浏览器历史 / 书签 / Referer / 公网反代日志；唯一残留是 **EMBYHUB 本机的 uvicorn 访问日志**（记录带 query 的路径），只在内网设备本地。只要 10307 不对公网暴露且本机日志不外发，无需额外处理，也无需为此改用 Header。
 - **改变拓扑时才需要收紧**：若日后把 `/api/v1/webhook` 暴露到公网、改走公网反向代理、或把访问日志上报到第三方，则应收紧日志中 query 的采集与留存，并考虑把 `WEBHOOK_ALLOW_QUERY_TOKEN` 设为 `0`（前提是媒体服务器插件支持自定义请求头）。
 - Bark Device Key 只在运行期配置中保存原文，管理端读取与推送返回值/日志一律掩码或剔除；回填掩码值不会覆盖真实 Key。
 - API 调用走 `Authorization: Bearer <API Token>`；
@@ -80,7 +80,7 @@
 
 - 应用源码来自上游 `amlkiller/emby-pulse` main 分支快照，逐文件按 Git Blob sha 拉取，不含上游提交历史；
 - 镜像由本仓库 `Dockerfile` 自行构建，不引用上游镜像；运行时基础镜像为 `python:3.12-slim`，依赖由 `uv.lock` 锁定；
-- 当前 CI 构建 `linux/amd64` 镜像；ARM 设备可在本地执行 `docker build -t emby-pulse .` 自行构建；
+- 当前 CI 构建 `linux/amd64` 镜像；ARM 设备可在本地执行 `docker build -t embyhub .` 自行构建；
 - 上游仓库未附带 LICENSE，请自行评估再分发合规性；
 - CI 仅使用 `GITHUB_TOKEN` 推送 GHCR，不需要也不应在仓库中存放任何长期凭证。
 

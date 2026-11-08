@@ -203,7 +203,7 @@ def cmd_stats(bot, chat_id, period='day', platform="tg"):
             weekday_line = f" {weekday}" if weekday else ""
 
             caption_parts = [
-                f"📊 <b>EmbyPulse {title_cn}</b>",
+                f"📊 <b>EmbyHub {title_cn}</b>",
                 f"{date_line}{weekday_line}",
                 "",
                 "📈 <b>数据大盘</b>",
@@ -241,7 +241,7 @@ def cmd_stats(bot, chat_id, period='day', platform="tg"):
                 bot.send_photo(chat_id, poster, caption.strip(), platform=platform)
                 return
 
-        caption = (f"📊 <b>EmbyPulse {title_display}</b>\n\n"
+        caption = (f"📊 <b>EmbyHub {title_display}</b>\n\n"
                    f"📈 <b>数据大盘</b>\n"
                    f"▶️ 总播放量：{plays} 次\n"
                    f"⏱️ 活跃时长：{hours_str} 小时\n"

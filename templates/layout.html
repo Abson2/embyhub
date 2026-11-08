@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{% block title %}EmbyPulse Admin{% endblock %}</title>
+    <title>{% block title %}EmbyHub Admin{% endblock %}</title>
     <link rel="icon" href="/static/img/favicon.png" type="image/png">
     
     <!-- 🔥 DNS 预连接 + 资源预加载（加速 CDN 资源加载） -->
@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="EmbyPulse">
+    <meta name="apple-mobile-web-app-title" content="EmbyHub">
     <script nonce="{{ request.state.csp_nonce }}" src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script nonce="{{ request.state.csp_nonce }}" src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -870,7 +870,7 @@
         // 🔥 补全：重启系统命令
         // ==========================================
         async function restartSystem() {
-            const confirmed = await showConfirm({type: 'danger', title: '重启系统', message: '确定要重启 Emby Pulse 服务端吗？\n重启期间网站将短暂无法访问。', confirmText: '重启'});
+            const confirmed = await showConfirm({type: 'danger', title: '重启系统', message: '确定要重启 EmbyHub 服务端吗？\n重启期间网站将短暂无法访问。', confirmText: '重启'});
             if(!confirmed) return;
             try {
                 fetch('/api/system/restart', { method: 'POST' }); 

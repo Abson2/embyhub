@@ -6,7 +6,7 @@ import requests
 class WeatherClient:
     @staticmethod
     def _headers() -> dict:
-        return {"User-Agent": "Mozilla/5.0 (EmbyPulse)"}
+        return {"User-Agent": "Mozilla/5.0 (EmbyHub)"}
 
     def get_qweather_location(self, host: str, city: str, api_key: str, *, timeout: float = 6):
         encoded_city = urllib.parse.quote(city)

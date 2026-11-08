@@ -39,7 +39,7 @@ def test_new_chat_member_service_sends_default_welcome_when_custom_empty(monkeyp
     assert sent == [
         (
             "chat-2",
-            "👋 你好！我是 EmbyPulse 用户机器人，已加入 <b>Group B</b>\n\n"
+            "👋 你好！我是 EmbyHub 用户机器人，已加入 <b>Group B</b>\n\n"
             "✅ 发送 /checkin 或 /签到 获取积分\n"
             "✅ 发送 /help 查看群内可用指令\n\n"
             "💡 更多功能请私聊机器人使用",

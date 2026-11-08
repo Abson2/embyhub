@@ -1,5 +1,14 @@
 # 更新日志
 
+## 2.6
+
+品牌更名版：项目全面更名为 **embyhub**，功能与主体结构不变，用于明确本项目是基于上游 EmbyPulse 的独立新项目。
+
+- **名称与地址**：仓库 `Abson2/embyhub`、镜像 `abson2/embyhub`（Docker Hub 两段式，与 `walkingd/tgto123` 同构）、容器与 compose 服务名 `embyhub`；管理端 / 用户端页面标题、PWA 应用名、通知文案、插件市场索引与 GitHub 仓库白名单同步更名。
+- **镜像仓库迁移**：CI 由 GHCR 改为 Docker Hub，登录改用 `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` secrets；GHCR 历史镜像保留但不再接收新版本，升级需把 `image:` 行改为 `abson2/embyhub:2.6`。
+- **保持不变**：README 中「基于 EmbyPulse」的溯源、引用介绍、鸣谢与许可证条款；全部历史版本条目与已发布 tag；技术标识符（`SYSTEM_DB_PATH`、会话标志、日志队列属性、`EMBYPULSE_CONFIG_DIR` 等）与依赖锁，避免升级后数据、登录态或配置失效。
+- **图标**：本版先交付候选设计，由使用者选定后再覆盖 `static/img/` 资产，故本条不包含图标落地。
+
 ## 2.5.1
 
 插件定时执行修复与完善版：修复两个线上故障，并把「按分钟间隔」升级为北京时间 cron 计划管理。

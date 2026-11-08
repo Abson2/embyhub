@@ -142,7 +142,7 @@ BASE_CONF = {
     "server": "https://push.example.com",
     "device_key": "REAL_DEVICE_KEY_123456",
     "sound": "default",
-    "group": "EMBYPULSE",
+    "group": "EMBYHUB",
     "level": "active",
     "notify_library_new": True,
     "notify_request_new": True,
@@ -167,7 +167,7 @@ check("默认服务器为官方 Bark 服务", masked["server"] == "https://api.d
 check("默认总开关关闭", masked["enabled"] is False)
 check("两类消息默认开启",
       masked["notify_library_new"] is True and masked["notify_request_new"] is True)
-check("默认分组 / 铃声", masked["group"] == "EMBYPULSE" and masked["sound"] == "default")
+check("默认分组 / 铃声", masked["group"] == "EMBYHUB" and masked["sound"] == "default")
 
 ncfg.set_bark_config({
     "enabled": True,
@@ -237,7 +237,7 @@ check("请求体标题正确", p.get("title") == "新片入库")
 check("请求体正文正确", p.get("body") == "正文内容")
 check("请求体携带跳转 url", p.get("url") == "https://emby.example.com/play")
 check("请求体携带 group/sound/level",
-      p.get("group") == "EMBYPULSE" and p.get("sound") == "default"
+      p.get("group") == "EMBYHUB" and p.get("sound") == "default"
       and p.get("level") == "active")
 check("超时参数已设置", t.calls[-1][1] == bark.BARK_TIMEOUT)
 check("返回值不含 device_key", "device_key" not in r)
@@ -389,7 +389,7 @@ t = FakeTransport()
 r = bark.send_test(config=conf(enabled=False, notify_library_new=False,
                                notify_request_new=False), transport=t)
 check("测试推送绕过所有开关", len(t.calls) == 1 and r["ok"] is True, str(r))
-check("测试推送标题明确", t.last_payload.get("title") == "EMBYPULSE 测试推送")
+check("测试推送标题明确", t.last_payload.get("title") == "EMBYHUB 测试推送")
 
 t = FakeTransport()
 r = bark.send_test(config=conf(enabled=False, device_key=""), transport=t)

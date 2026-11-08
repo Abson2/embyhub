@@ -2,7 +2,7 @@
 """系统级 Bark 推送入口（1.9.0）
 ================================
 
-职责：在 EMBYPULSE 系统层面提供一个独立的 Bark 推送通道，当前覆盖两类消息：
+职责：在 EMBYHUB 系统层面提供一个独立的 Bark 推送通道，当前覆盖两类消息：
 
 1. **新片入库通知**：`push_new_library_item()`（电影入库 / 剧集新集入库）
 2. **新的求片通知**：`push_new_request()`（用户提交求片心愿）
@@ -44,7 +44,7 @@ import urllib.request
 
 logger = logging.getLogger("uvicorn")
 
-DEFAULT_BARK_GROUP = "EMBYPULSE"
+DEFAULT_BARK_GROUP = "EMBYHUB"
 DEFAULT_BARK_SOUND = "default"
 DEFAULT_BARK_LEVEL = "active"
 BARK_TIMEOUT = 10
@@ -252,7 +252,7 @@ def send_test(*, config=None, transport=None):
     """管理端「测试推送」按钮：绕过开关，验证服务器与 Device Key 是否可用。"""
     conf = _runtime_config(config)
     return send(
-        "EMBYPULSE 测试推送",
+        "EMBYHUB 测试推送",
         "Bark 系统级推送配置成功。新片入库 / 新的求片通知将发送到这里。",
         config=conf, transport=transport, force=True,
     )

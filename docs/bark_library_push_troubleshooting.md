@@ -1,6 +1,6 @@
 # 容器排查报告：管理端 Bark 新片入库通知不触发
 
-> 适用范围：emby-pulse-hardened（本项目 Abson2/emby-pulse fork）
+> 适用范围：embyhub（本项目 Abson2/embyhub fork）
 > 关联需求：管理端「Bark 新片入库通知」修复（调用「自定义通知模板」插件）
 > 涉及版本：根因在 `v1.9.2` 修复；Bark 正文改走 `notify_template` 插件为 `v1.9.3` 增强
 
@@ -62,17 +62,17 @@ def start(self):
 
 ## 4. 容器内排查步骤（Diagnosis）
 
-进入运行中的容器（假设服务名为 `emby-pulse` / 镜像 `emby-pulse-hardened`）：
+进入运行中的容器（假设服务名为 `embyhub` / 镜像 `embyhub`）：
 
 ```bash
 # 进入容器
-docker exec -it emby-pulse /bin/sh
+docker exec -it embyhub /bin/sh
 
 # (1) 查看启动日志，确认事件订阅是否建立
 #     期望看到（v1.9.2+）：
 #     🤖 Notification Bot Started (event subscriptions active, tg=False, wecom=False)
 #     若只配置了 Bark，tg/wecom 均为 False 但仍应 "event subscriptions active"
-docker logs emby-pulse 2>&1 | grep -i "notification bot started"
+docker logs embyhub 2>&1 | grep -i "notification bot started"
 
 # (2) 若日志显示完全缺失上述行 → 说明 Bot 未启动或仍在提前 return，升级到 v1.9.2+
 ```
@@ -165,7 +165,7 @@ python tests/test_bark_push.py
 #     期望：通过 84 / 失败 0
 
 # (C) 容器内真实触发（参考步骤 4/5 后再入库一部影片，观察日志）
-docker logs -f emby-pulse 2>&1 | grep -i "\[Bark\] 新片入库通知"
+docker logs -f embyhub 2>&1 | grep -i "\[Bark\] 新片入库通知"
 #     期望出现：INFO [Bark] 新片入库通知: 推送成功
 ```
 

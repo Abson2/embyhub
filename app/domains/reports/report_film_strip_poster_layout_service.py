@@ -317,7 +317,7 @@ def draw_film_strip_layout(
     footer_y = current_y + 10
     draw.line([(padding, footer_y), (W - padding, footer_y)], fill=colors['divider'], width=1)
 
-    watermark_text = "By Emby Pulse"
+    watermark_text = "By EmbyHub"
     bbox = draw.textbbox((0, 0), watermark_text, font=font_watermark)
     watermark_w = bbox[2] - bbox[0]
     draw.text(((W - watermark_w) // 2, footer_y + 15), watermark_text, font=font_watermark, fill=colors['watermark'])

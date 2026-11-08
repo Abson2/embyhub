@@ -113,7 +113,7 @@ class NotifyTemplatePlugin(PluginBase):
     icon = "fa-palette"
     icon_color = "from-rose-500 to-orange-500"
     version = "1.1.0"
-    author = "EmbyPulse"
+    author = "EmbyHub"
 
     def on_enable(self):
         logger.info("🔌 [通知模板] 插件已启用")

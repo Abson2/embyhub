@@ -23,7 +23,7 @@ class AutoExpirePlugin(PluginBase):
     icon = "fa-clock"
     icon_color = "from-amber-500 to-orange-500"
     version = "1.3.0"
-    author = "EmbyPulse"
+    author = "EmbyHub"
 
     def __init__(self):
         super().__init__()

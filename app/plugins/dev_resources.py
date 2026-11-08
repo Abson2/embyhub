@@ -58,7 +58,7 @@ def get_ai_prompt() -> str:
 # ---- 单文件示例插件 ----
 
 EXAMPLE_PLUGIN_PY = '''\
-"""单文件示例插件：最小可运行的 EmbyPulse 外部插件。
+"""单文件示例插件：最小可运行的 EmbyHub 外部插件。
 
 整个插件只有一个 plugin.py（外加必须的 manifest.json），
 演示配置读取、日志与一个只读 API 端点。
@@ -80,7 +80,7 @@ class HelloPlugin(PluginBase):
     icon = "fa-hand-wave"
     icon_color = "from-violet-500 to-purple-600"
     version = "1.0.0"
-    author = "EmbyPulse"
+    author = "EmbyHub"
 
     def __init__(self):
         super().__init__()
@@ -120,7 +120,7 @@ EXAMPLE_MANIFEST = {
     "name": "示例插件",
     "version": EXAMPLE_PLUGIN_VERSION,
     "description": "最小可运行示例：演示配置、日志与一个只读 API",
-    "author": "EmbyPulse",
+    "author": "EmbyHub",
     "icon": "fa-hand-wave",
     "icon_color": "from-violet-500 to-purple-600",
     # entry 为必填字段（2.3 校验强制），示例包入口即 plugin.py
@@ -133,7 +133,7 @@ EXAMPLE_MANIFEST = {
 EXAMPLE_README = """\
 # 示例插件（hello_plugin）
 
-演示 EmbyPulse 外部插件的最小结构：
+演示 EmbyHub 外部插件的最小结构：
 
 - `manifest.json` 插件元信息（必填字段见文件）
 - `plugin.py` 入口文件，模块底部 `plugin = HelloPlugin()` 供加载器识别

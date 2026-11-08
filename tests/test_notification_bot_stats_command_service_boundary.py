@@ -112,7 +112,7 @@ def test_stats_command_fallback_text_report_groups_content_and_uses_legacy_depen
     assert sent_photos[0][1] == "cover-url"
     assert sent_photos[0][3:] == ("HTML", None, "tg", None)
     caption = sent_photos[0][2]
-    assert caption.startswith("📊 <b>EmbyPulse 今日日报\n📅 ")
+    assert caption.startswith("📊 <b>EmbyHub 今日日报\n📅 ")
     assert "📈 <b>数据大盘</b>" in caption
     assert "▶️ 总播放量：3 次" in caption
     assert "⏱️ 活跃时长：1.5 小时" in caption

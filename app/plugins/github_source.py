@@ -28,7 +28,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-DEFAULT_REPO = "Abson2/emby-pulse"
+DEFAULT_REPO = "Abson2/embyhub"
 DEFAULT_REF = "main"
 REGISTRY_PATH = "plugins/index.json"
 
@@ -141,7 +141,7 @@ def http_get(url: str, limit: int, timeout: int = DEFAULT_TIMEOUT) -> bytes:
         assert_safe_url(current)
         req = urllib.request.Request(
             current,
-            headers={"User-Agent": "EmbyPulse-PluginHub/2.3", "Accept": "*/*"},
+            headers={"User-Agent": "EmbyHub-PluginHub/2.6", "Accept": "*/*"},
             method="GET",
         )
         try:

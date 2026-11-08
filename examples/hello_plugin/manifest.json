@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "entry": "plugin.py",
   "description": "最小可运行示例：演示配置、日志与一个只读 API",
-  "author": "EmbyPulse",
+  "author": "EmbyHub",
   "icon": "fa-hand-wave",
   "icon_color": "from-violet-500 to-purple-600",
   "min_app_version": "2.3",

@@ -166,7 +166,7 @@ def main(argv=None):
     if not argv or os.path.abspath(argv[0]) == ROOT:
         return self_check()
 
-    ap = argparse.ArgumentParser(description="打包 EmbyPulse 2.3 外部插件")
+    ap = argparse.ArgumentParser(description="打包 EmbyHub 2.3 外部插件")
     ap.add_argument("plugin_dir", help="插件源码目录（含 manifest.json）")
     ap.add_argument("-o", "--out", default=".", help="产物输出目录")
     args = ap.parse_args(argv)

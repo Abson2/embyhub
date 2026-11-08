@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block title %}通知管理 - EmbyPulse{% endblock %}
+{% block title %}通知管理 - EmbyHub{% endblock %}
 {% block head %}
 <style>
     .channel-checkbox:checked + label { background-color: #10b981; color: white; }
@@ -159,7 +159,7 @@
                 <div class="flex items-center gap-4">
                     <label class="text-sm font-bold text-gray-600 dark:text-gray-300 w-[100px]">提示音 / 分组</label>
                     <input type="text" id="bark-sound" class="w-32 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-sm" placeholder="default">
-                    <input type="text" id="bark-group" class="flex-1 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-sm" placeholder="EMBYPULSE">
+                    <input type="text" id="bark-group" class="flex-1 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-sm" placeholder="EMBYHUB">
                 </div>
                 <div class="flex items-center gap-6">
                     <label class="text-sm font-bold text-gray-600 dark:text-gray-300 w-[100px]">推送消息</label>
@@ -237,7 +237,7 @@ async function init() {
             barkDk.readOnly = false;
         }
         document.getElementById('bark-sound').value = config.bark?.sound || 'default';
-        document.getElementById('bark-group').value = config.bark?.group || 'EMBYPULSE';
+        document.getElementById('bark-group').value = config.bark?.group || 'EMBYHUB';
         document.getElementById('bark-notify-library-new').checked = config.bark?.notify_library_new !== false;
         document.getElementById('bark-notify-request-new').checked = config.bark?.notify_request_new !== false;
     }

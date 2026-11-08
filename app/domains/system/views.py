@@ -137,7 +137,7 @@ def check_page_permission(request: Request, path: str):
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>无访问权限 - EmbyPulse</title>
+    <title>无访问权限 - EmbyHub</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
@@ -303,7 +303,7 @@ def check_page_permission(request: Request, path: str):
         </div>
     </div>
     <div class="footer">
-        Powered by <a href="#">EmbyPulse</a>
+        Powered by <a href="#">EmbyHub</a>
     </div>
 </body>
 </html>''',
@@ -332,8 +332,8 @@ async def get_favicon():
 @router.get("/manifest.json")
 async def get_manifest():
     return JSONResponse({
-        "name": "EmbyPulse 映迹",
-        "short_name": "EmbyPulse",
+        "name": "EmbyHub",
+        "short_name": "EmbyHub",
         "start_url": "/?v=2",
         "display": "standalone",
         "background_color": "#ffffff",

@@ -32,7 +32,7 @@ class LibraryCoverPlugin(PluginBase):
     icon = "fa-images"
     icon_color = "from-pink-500 to-rose-500"
     version = "1.0.0"
-    author = "EmbyPulse"
+    author = "EmbyHub"
 
     def __init__(self):
         super().__init__()

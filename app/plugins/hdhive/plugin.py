@@ -28,7 +28,7 @@ class HDHivePlugin(PluginBase):
     icon = "fa-clapperboard"
     icon_color = "from-emerald-500 to-teal-500"
     version = "1.1.0"
-    author = "EmbyPulse"
+    author = "EmbyHub"
 
     def __init__(self):
         super().__init__()

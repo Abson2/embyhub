@@ -126,7 +126,7 @@ class MediaServerAdapter:
 
     def authenticate_by_name(self, username: str, password: str, *, timeout: float = 10):
         headers = {
-            "X-Emby-Authorization": 'MediaBrowser Client="EmbyPulse", Device="EmbyPulse", DeviceId="EmbyPulse", Version="1.0"',
+            "X-Emby-Authorization": 'MediaBrowser Client="EmbyHub", Device="EmbyHub", DeviceId="EmbyHub", Version="1.0"',
         }
         return self.session.post(
             self._build_url("/Users/AuthenticateByName"),

@@ -37,7 +37,7 @@ class SeasonPosterUpdaterPlugin(PluginBase):
     icon = "fa-photo-film"
     icon_color = "from-teal-500 to-cyan-500"
     version = "1.0.0"
-    author = "EmbyPulse"
+    author = "EmbyHub"
 
     def __init__(self):
         super().__init__()

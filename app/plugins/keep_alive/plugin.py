@@ -36,7 +36,7 @@ class KeepAlivePlugin(PluginBase):
     icon = "fa-heart-pulse"
     icon_color = "from-rose-500 to-pink-500"
     version = "2.0.0"
-    author = "EmbyPulse"
+    author = "EmbyHub"
 
     def __init__(self):
         super().__init__()

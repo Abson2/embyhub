@@ -16,7 +16,7 @@ logger = logging.getLogger("uvicorn")
 def check_webhook_token():
     """检查 Webhook Token 是否为默认值"""
     current_token = get_webhook_token()
-    default_tokens = ["embypulse", "emby", "test", "123456", "password", ""]
+    default_tokens = ["embyhub", "emby", "test", "123456", "password", ""]
     
     if current_token in default_tokens:
         new_token = secrets.token_urlsafe(24)

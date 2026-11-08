@@ -69,7 +69,7 @@ def test_help_command_sends_existing_menu_through_legacy_entry():
     assert parse_mode == "HTML"
     assert reply_markup is None
     assert platform == "tg"
-    assert text.startswith("🤖 <b>EmbyPulse 智能助理指南</b>")
+    assert text.startswith("🤖 <b>EmbyHub 智能助理指南</b>")
     assert "/calendar - 查看今日剧集更新" in text
     assert "/whois [TG用户名/TG ID/Emby用户名] - 查询绑定信息与到期时间" in text
     assert text.endswith("/help - 获取本帮助菜单")

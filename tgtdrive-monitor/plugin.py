@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 PLUGIN_MANIFEST = {
     'schema_version': 1,
-    'id': 'emby-pulse-monitor',
+    'id': 'embyhub-monitor',
     'name': '求片完结关键词清理',
     'version': '1.0.0',
     'description': '读取 TgtoDrive 白名单里本插件写入的 kw_ 规则，按影视是否已入库 Emby 判定完结，满 cleanup_days 天后删除对应关键词（只删本插件的，不动用户规则）。',
@@ -29,8 +29,8 @@ PLUGIN_MANIFEST = {
 
 只使用 Python 标准库（urllib / json / pathlib / re）。
 
-分工（与 EMBYPULSE 侧「求片同步 TgtoDrive 白名单」插件 A 配合）：
-- 插件 A（运行在 EMBYPULSE）把审批通过/手动接单的求片**推送**进 TgtoDrive 的
+分工（与 EMBYHUB 侧「求片同步 TgtoDrive 白名单」插件 A 配合）：
+- 插件 A（运行在 EMBYHUB）把审批通过/手动接单的求片**推送**进 TgtoDrive 的
   「频道监控 → 关键词白名单」，规则 id 带 kw_ 前缀（如 kw_123_0），且**永不删除**任何规则。
 - 本插件（运行在 TgtoDrive 容器内，由 OpenAPI 按计划周期调用）负责**清理**：
   读取白名单里本插件写入的 kw_ 规则，按「影视已入库 Emby」判定完结；

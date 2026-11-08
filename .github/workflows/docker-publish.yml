@@ -8,12 +8,11 @@ on:
 
 permissions:
   contents: write
-  packages: write
+  # 2.6 起镜像发布到 Docker Hub，packages 权限不再需要（保留不影响 GHCR 历史包）
 
 env:
-  REGISTRY: ghcr.io
-  # GHCR 要求镜像名全小写
-  IMAGE_NAME: ghcr.io/abson2/emby-pulse-hardened
+  # 2.6：Docker Hub 两段式地址，与 walkingd/tgto123 同构
+  IMAGE_NAME: abson2/embyhub
 
 jobs:
   verify:
@@ -103,12 +102,12 @@ jobs:
               print("yaml ok:", p)
           c = yaml.safe_load(open("docker-compose.yml", encoding="utf-8"))
           imgs = [s.get("image", "") for s in c["services"].values()]
-          assert any(i.startswith("ghcr.io/abson2/emby-pulse-hardened") for i in imgs), "compose 必须引用自己的镜像"
+          assert any(i.startswith("abson2/embyhub") for i in imgs), "compose 必须引用自己的镜像"
           print("compose image ok")
           PY
 
   build:
-    name: 构建 / 冒烟 / 推送 GHCR
+    name: 构建 / 冒烟 / 推送镜像
     needs: verify
     runs-on: ubuntu-latest
     steps:
@@ -118,12 +117,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GitHub Container Registry
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract metadata
         id: meta
@@ -228,6 +226,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: emby-pulse ${{ github.ref_name }}
+          name: embyhub ${{ github.ref_name }}
           body_path: CHANGELOG.md
           generate_release_notes: true

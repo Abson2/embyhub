@@ -53,7 +53,7 @@ class SmartCollectionsPlugin(PluginBase):
     icon = "fa-layer-group"
     icon_color = "from-purple-500 to-pink-500"
     version = "2.0.0"
-    author = "EmbyPulse"
+    author = "EmbyHub"
     pro_only = True
     
     def __init__(self):

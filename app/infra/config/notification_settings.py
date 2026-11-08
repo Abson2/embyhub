@@ -6,7 +6,7 @@ import json
 # 系统级 Bark 推送（1.9.0）：新片入库 / 新的求片
 # ---------------------------------------------------------------------------
 BARK_SERVER_DEFAULT = "https://api.day.app"
-BARK_GROUP_DEFAULT = "EMBYPULSE"
+BARK_GROUP_DEFAULT = "EMBYHUB"
 BARK_SOUND_DEFAULT = "default"
 
 # 🔥 配置边界说明（避免概念混淆）：

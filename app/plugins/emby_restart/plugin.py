@@ -21,7 +21,7 @@ class EmbyRestartPlugin(PluginBase):
     icon = "fa-rotate"
     icon_color = "from-orange-500 to-red-500"
     version = "1.2.0"
-    author = "EmbyPulse"
+    author = "EmbyHub"
     pro_only = True  # Pro 专享
 
     def __init__(self):

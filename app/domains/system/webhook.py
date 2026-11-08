@@ -35,7 +35,7 @@ def _get_webhook_token(request: Request):
       即可回到严格的 Header-only 模式。
     - 本部署的 Webhook 由 Emby 服务端在**内网直连**发起，不经过浏览器与
       公网反代，因此没有浏览器历史 / Referer / 公网日志泄露面；凭证只会
-      留在 EMBYPULSE 本机访问日志。若日后把 10307 暴露到公网或改走公网
+      留在 EMBYHUB 本机访问日志。若日后把 10307 暴露到公网或改走公网
       反代，再收紧日志采集或切回 Header-only。
     """
     token = request.headers.get("X-Webhook-Token")

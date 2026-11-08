@@ -28,7 +28,7 @@ class Cloud115Plugin(PluginBase):
     icon = "fa-cloud-arrow-down"
     icon_color = "from-blue-500 to-cyan-500"
     version = "1.0.0"
-    author = "EmbyPulse"
+    author = "EmbyHub"
 
     def __init__(self):
         super().__init__()

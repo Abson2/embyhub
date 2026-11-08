@@ -128,7 +128,7 @@ async def get_dynamic_manifest(request: Request):
     cache_buster = f"?t={int(time.time())}"
     
     manifest = {
-        "name": config.get("app_name", "用户中心 - EmbyPulse"),
+        "name": config.get("app_name", "用户中心 - EmbyHub"),
         "short_name": config.get("app_short_name", "用户中心"),
         "start_url": "/request",
         "display": "standalone",
@@ -245,7 +245,7 @@ async def set_app_name(request: Request):
         raise HTTPException(status_code=403, detail="需要管理员权限")
     
     data = await request.json()
-    app_name = data.get("app_name", "用户中心 - EmbyPulse")
+    app_name = data.get("app_name", "用户中心 - EmbyHub")
     app_short_name = data.get("app_short_name", "用户中心")
     
     save_pwa_config("app_name", app_name)
@@ -309,7 +309,7 @@ async def get_pwa_config_api(request: Request):
         "status": "success",
         "config": {
             "default_icon": config.get("default_icon", "default"),
-            "app_name": config.get("app_name", "用户中心 - EmbyPulse"),
+            "app_name": config.get("app_name", "用户中心 - EmbyHub"),
             "app_short_name": config.get("app_short_name", "用户中心")
         },
         "icons": icons

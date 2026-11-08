@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""EmbyPulse 2.3 最小外部插件示例。
+"""EmbyHub 2.3 最小外部插件示例。
 
 本文件只在管理员于插件中心「显式启用」时才会被 import；导入 zip 包阶段
 仅做校验与落盘，绝不执行本模块的任何一行代码。
@@ -24,7 +24,7 @@ class HelloPlugin(PluginBase):
     icon = "fa-hand-wave"
     icon_color = "from-violet-500 to-purple-600"
     version = "1.0.0"
-    author = "EmbyPulse"
+    author = "EmbyHub"
     pro_only = False
     permissions = ["config:read"]
 

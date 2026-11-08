@@ -399,7 +399,7 @@ to_plain_text = sec_utils.to_plain_text
 sanitize_html = sec_utils.sanitize_html
 
 # 6.1 普通纯文本（不含 HTML 特殊字符）输入输出与原实现逐字一致
-for plain in ("测试推送", "纯文本无标签 123", "欢迎使用 EmbyPulse 2026", ""):
+for plain in ("测试推送", "纯文本无标签 123", "欢迎使用 EmbyHub 2026", ""):
     check("普通纯文本输入输出不变：%r" % plain[:12],
           to_plain_text(plain, max_length=2000) == sanitize_html(plain, max_length=2000),
           "new=%r old=%r" % (to_plain_text(plain, max_length=2000),
@@ -504,7 +504,7 @@ logger = CapturingLogger()
 check_token_fn = extract_function(
     sec_src, "check_webhook_token",
     {
-        "get_webhook_token": lambda: "embypulse",
+        "get_webhook_token": lambda: "embyhub",
         "set_webhook_token": lambda t: captured_tokens.append(t),
         "secrets": secrets,
         "logger": logger,
@@ -596,10 +596,10 @@ ci_src = read(".github/workflows/docker-publish.yml")
 check("安全契约与富文本净化回归均接入 CI",
       "tools/check_security_contracts.py" in ci_src
       and "tests/test_sanitize_rich_html.py" in ci_src)
-check("2.5.1 发版版本点已同步（历史 tag 不重推）",
-      'APP_VERSION = "2.5.1"' in read("app/shared/version.py")
-      and "IMAGE_TAG:-2.5.1}" in read("docker-compose.yml")
-      and "request_app.js?v=2.5.1" in read("templates/request.html"))
+check("2.6 发版版本点已同步（历史 tag 不重推）",
+      'APP_VERSION = "2.6"' in read("app/shared/version.py")
+      and "IMAGE_TAG:-2.6}" in read("docker-compose.yml")
+      and "request_app.js?v=2.6" in read("templates/request.html"))
 
 print("\npassed: %d  failed: %d" % (PASSED, len(FAILS)))
 if FAILS:

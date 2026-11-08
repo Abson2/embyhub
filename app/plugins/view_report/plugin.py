@@ -36,7 +36,7 @@ class ViewReportPlugin(PluginBase):
     icon = "fa-chart-line"
     icon_color = "from-blue-500 to-purple-500"
     version = "1.0.0"
-    author = "EmbyPulse"
+    author = "EmbyHub"
 
     def __init__(self):
         super().__init__()
@@ -641,7 +641,7 @@ class ViewReportPlugin(PluginBase):
         
         # 构建报告内容
         lines = []
-        lines.append(f"📊 <b>EmbyPulse {stats['title']}</b>")
+        lines.append(f"📊 <b>EmbyHub {stats['title']}</b>")
         lines.append(f"📅 {stats['date_str']}")
         lines.append("")
         

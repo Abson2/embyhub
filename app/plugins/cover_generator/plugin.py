@@ -43,7 +43,7 @@ class CoverGeneratorPlugin(PluginBase):
     icon = "fa-wand-magic-sparkles"
     icon_color = "from-purple-500 to-pink-500"
     version = "1.0.0"
-    author = "EmbyPulse"
+    author = "EmbyHub"
 
     def __init__(self):
         super().__init__()

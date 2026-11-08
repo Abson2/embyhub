@@ -64,7 +64,7 @@ class HDHiveSignPlugin(PluginBase):
     icon = "fa-calendar-check"
     icon_color = "from-purple-500 to-pink-500"
     version = "1.0.1"
-    author = "EmbyPulse"
+    author = "EmbyHub"
     pro_only = True  # 仅 Pro 用户可用
     
     def __init__(self):

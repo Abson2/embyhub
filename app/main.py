@@ -50,8 +50,8 @@ def create_app() -> FastAPI:
     prepare_runtime()
     app = FastAPI(
         lifespan=build_lifespan(REQUEST_PORT),
-        title="EmbyPulse API",
-        description="EmbyPulse 开放接口与插件开发契约；/docs、/redoc、/openapi.json 默认仅管理员可访问。",
+        title="EmbyHub API",
+        description="EmbyHub 开放接口与插件开发契约；/docs、/redoc、/openapi.json 默认仅管理员可访问。",
         version=APP_VERSION,
         # /docs 与 /redoc 由 configure_openapi_docs() 自定义提供，为内联脚本注入
         # 每请求的 CSP nonce；openapi.json 由 FastAPI 自动生成。

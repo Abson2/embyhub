@@ -950,7 +950,7 @@ class NotificationBot:
     def _handle_msg_reply_message(self, text, cid):
         return notification_bot_message_center_callback_service.handle_msg_reply_message(self, text, cid)
 
-class EmbyPulseOrchestrator:
+class EmbyHubOrchestrator:
     def __init__(self):
         self.daemon = SystemDaemon()
         self.notifier = NotificationBot()
@@ -969,7 +969,7 @@ class EmbyPulseOrchestrator:
     def push_playback_event(self, data, action="start"):
         bus.publish("webhook.received", f"playback.{action}", data)
 
-bot = EmbyPulseOrchestrator()
+bot = EmbyHubOrchestrator()
 
 
 def start_notification_services() -> None:

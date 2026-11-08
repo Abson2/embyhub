@@ -186,14 +186,14 @@ def handle_callback(cq):
             _edit_provider()(
                 chat_id,
                 msg_id,
-                f"👋 欢迎回来，<b>{binding['emby_username']}</b>！\n\n🎬 EmbyPulse 用户自助服务\n请选择你需要的服务：",
+                f"👋 欢迎回来，<b>{binding['emby_username']}</b>！\n\n🎬 EmbyHub 用户自助服务\n请选择你需要的服务：",
                 reply_markup=_main_menu_keyboard_provider()(binding),
             )
         else:
             _edit_provider()(
                 chat_id,
                 msg_id,
-                f"👋 你好 <b>{tg_name}</b>！\n\n🎬 这是 <b>EmbyPulse</b> 用户自助服务机器人\n\n请先完成绑定或注册：",
+                f"👋 你好 <b>{tg_name}</b>！\n\n🎬 这是 <b>EmbyHub</b> 用户自助服务机器人\n\n请先完成绑定或注册：",
                 reply_markup=_main_menu_keyboard_provider()(None),
             )
         return

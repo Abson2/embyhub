@@ -168,11 +168,11 @@ check("demo_plugin" not in EXT["list_installed"](), "卸载后不再出现在已
 check(EXT["uninstall"]("demo_plugin") is False, "重复卸载返回 False")
 
 print("\n== 5. GitHub 发布窗口：URL 拼接与白名单 ==")
-check(GH["registry_url"]("Abson2/emby-pulse", "main")
-      == "https://raw.githubusercontent.com/Abson2/emby-pulse/main/plugins/index.json",
+check(GH["registry_url"]("Abson2/embyhub", "main")
+      == "https://raw.githubusercontent.com/Abson2/embyhub/main/plugins/index.json",
       "索引 URL 由服务端固定拼接")
-check(GH["asset_url"]("Abson2/emby-pulse", "v2.3", "plugins/dist/demo.zip")
-      == "https://raw.githubusercontent.com/Abson2/emby-pulse/v2.3/plugins/dist/demo.zip",
+check(GH["asset_url"]("Abson2/embyhub", "v2.3", "plugins/dist/demo.zip")
+      == "https://raw.githubusercontent.com/Abson2/embyhub/v2.3/plugins/dist/demo.zip",
       "产物 URL 由 repo/ref/相对路径拼接")
 
 
@@ -185,7 +185,7 @@ def rejects(fn, *args):
 
 
 for label, url in [
-    ("http 明文", "http://raw.githubusercontent.com/Abson2/emby-pulse/main/plugins/index.json"),
+    ("http 明文", "http://raw.githubusercontent.com/Abson2/embyhub/main/plugins/index.json"),
     ("非白名单域名", "https://evil.example.com/a.zip"),
     ("localhost 内网", "https://127.0.0.1/a.zip"),
     ("凭据注入", "https://user:pw@raw.githubusercontent.com/a.zip"),
@@ -195,7 +195,7 @@ for label, url in [
 check(GH["assert_safe_url"]("https://raw.githubusercontent.com/a/b.zip") is None, "白名单 HTTPS URL 放行")
 
 check(rejects(GH["validate_repo"], "evil/repo"), "仓库白名单拒绝第三方仓库")
-check(GH["validate_repo"]("Abson2/emby-pulse") == "Abson2/emby-pulse", "本项目仓库在白名单内")
+check(GH["validate_repo"]("Abson2/embyhub") == "Abson2/embyhub", "本项目仓库在白名单内")
 check(rejects(GH["current_ref"], "main/../../evil"), "ref 拒绝路径穿越")
 check(rejects(GH["current_ref"], "main evil"), "ref 拒绝空格")
 check(GH["current_ref"]("v2.3") == "v2.3", "合法 tag ref 放行")
@@ -210,17 +210,17 @@ valid_entry = {
     "download": "plugins/dist/demo_plugin-1.0.0.zip",
     "sha256": "a" * 64,
 }
-reg = GH["validate_registry"]({"schema": 1, "repository": "Abson2/emby-pulse", "plugins": [valid_entry]},
-                              "Abson2/emby-pulse")
+reg = GH["validate_registry"]({"schema": 1, "repository": "Abson2/embyhub", "plugins": [valid_entry]},
+                              "Abson2/embyhub")
 check(reg["plugins"][0]["id"] == "demo_plugin", "合法索引通过校验")
-check(rejects(GH["validate_registry"], {"schema": 2, "repository": "Abson2/emby-pulse", "plugins": []},
-              "Abson2/emby-pulse"), "拒绝 schema != 1")
+check(rejects(GH["validate_registry"], {"schema": 2, "repository": "Abson2/embyhub", "plugins": []},
+              "Abson2/embyhub"), "拒绝 schema != 1")
 check(rejects(GH["validate_registry"], {"schema": 1, "repository": "evil/repo", "plugins": []},
-              "Abson2/emby-pulse"), "拒绝索引 repository 与请求仓库不一致")
+              "Abson2/embyhub"), "拒绝索引 repository 与请求仓库不一致")
 check(rejects(GH["validate_registry"],
-              {"schema": 1, "repository": "Abson2/emby-pulse",
+              {"schema": 1, "repository": "Abson2/embyhub",
                "plugins": [dict(valid_entry, sha256="nope")]},
-              "Abson2/emby-pulse"), "拒绝缺少合法 sha256 的条目")
+              "Abson2/embyhub"), "拒绝缺少合法 sha256 的条目")
 check(GH["find_entry"](reg, "demo_plugin")["id"] == "demo_plugin", "按 id 找到索引条目")
 check(rejects(GH["find_entry"], reg, "missing"), "不存在的插件被拒绝")
 
@@ -228,11 +228,11 @@ _globals = GH["fetch_asset"].__globals__
 _orig_http = _globals["http_get"]
 try:
     _globals["http_get"] = lambda *a, **k: b"tampered"
-    check(rejects(GH["fetch_asset"], dict(valid_entry, sha256="a" * 64), "Abson2/emby-pulse", "main"),
+    check(rejects(GH["fetch_asset"], dict(valid_entry, sha256="a" * 64), "Abson2/embyhub", "main"),
           "产物 sha256 不匹配时丢弃")
     digest = GH["sha256_bytes"](b"payload")
     _globals["http_get"] = lambda *a, **k: b"payload"
-    check(GH["fetch_asset"](dict(valid_entry, sha256=digest), "Abson2/emby-pulse", "main") == b"payload",
+    check(GH["fetch_asset"](dict(valid_entry, sha256=digest), "Abson2/embyhub", "main") == b"payload",
           "sha256 匹配时返回产物")
 finally:
     _globals["http_get"] = _orig_http
@@ -295,7 +295,7 @@ for rel in ("app/plugins/external.py", "app/plugins/github_source.py"):
 print("\n== 10. 官方发布窗口端到端（离线） ==")
 reg_raw = json.loads(read("plugins/index.json"))
 try:
-    registry_data = GH["validate_registry"](reg_raw, "Abson2/emby-pulse")
+    registry_data = GH["validate_registry"](reg_raw, "Abson2/embyhub")
     check(True, "官方索引通过服务端 validate_registry")
 except Exception as exc:
     registry_data = {"plugins": []}
@@ -303,10 +303,10 @@ except Exception as exc:
 check(len(registry_data.get("plugins", [])) >= 1, "索引至少发布一个官方插件")
 if registry_data.get("plugins"):
     gh_entry = GH["find_entry"](registry_data, registry_data["plugins"][0]["id"])
-    gh_url = GH["asset_url"]("Abson2/emby-pulse", "main", gh_entry["download"])
+    gh_url = GH["asset_url"]("Abson2/embyhub", "main", gh_entry["download"])
     GH["assert_safe_url"](gh_url)
     check(gh_url.startswith(
-        "https://raw.githubusercontent.com/Abson2/emby-pulse/main/plugins/dist/"),
+        "https://raw.githubusercontent.com/Abson2/embyhub/main/plugins/dist/"),
         "下载地址由服务端按仓库+ref+相对路径拼接")
     asset_rel = os.path.join("plugins", "dist", os.path.basename(gh_entry["download"]))
     asset_path = os.path.join(ROOT, asset_rel)
@@ -331,7 +331,7 @@ if registry_data.get("plugins"):
                 modules_before = set(sys.modules)
                 installed = EXT["install_from_zip"](
                     asset_bytes,
-                    {"type": "github", "repo": "Abson2/emby-pulse",
+                    {"type": "github", "repo": "Abson2/embyhub",
                      "ref": "main", "asset": gh_entry["download"]},
                 )
                 check(installed["origin"]["source"] == "github"

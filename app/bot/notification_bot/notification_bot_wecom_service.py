@@ -314,7 +314,7 @@ def send_wecom_photo(bot, photo_bytes, html_text, inline_keyboard=None, touser="
         plain_text = re.sub(r"<[^>]+>", "", html_text).strip()
         lines = [line.strip() for line in plain_text.split("\n")]
 
-        title = lines[0] if lines else "EmbyPulse 通知"
+        title = lines[0] if lines else "EmbyHub 通知"
         if len(title.encode("utf-8")) > 128:
             title = title.encode("utf-8")[:120].decode("utf-8", "ignore") + "..."
 

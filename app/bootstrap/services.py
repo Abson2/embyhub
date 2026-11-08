@@ -38,7 +38,7 @@ def print_startup_panel(request_port: int) -> None:
     from app.core.config import PORT
 
     print("\n" + "=" * 55)
-    print("🚀 [系统启动] EmbyPulse 双引擎初始化成功！")
+    print("🚀 [系统启动] EmbyHub 双引擎初始化成功！")
     print("🤖 [消息通知] 机器人模块已就绪")
     print("🔥 [缓存预热] 仪表盘数据正在后台预热...")
     print("🎈 [用户社区] 首页缓存已启用，每 5 分钟自动刷新")
@@ -103,7 +103,7 @@ def reset_bootstrap_registry() -> None:
 
 def stop_bootstrap_services() -> None:
     print("\n" + "=" * 55)
-    print("🛑 [系统关闭] 正在停止 EmbyPulse 服务...")
+    print("🛑 [系统关闭] 正在停止 EmbyHub 服务...")
     registry = _bootstrap_registry
     if registry is not None:
         registry.stop_all()

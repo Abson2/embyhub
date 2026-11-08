@@ -73,7 +73,7 @@ def test_cmd_start_records_user_and_sends_unbound_menu_through_legacy_wrapper(mo
     assert recorded == [("tg1", "Alice TG")]
     assert sent == [(
         10,
-        "👋 你好 <b>Alice TG</b>！\n\n🎬 这是 <b>EmbyPulse</b> 用户自助服务机器人\n\n你还没有绑定账号，请先完成绑定或注册：",
+        "👋 你好 <b>Alice TG</b>！\n\n🎬 这是 <b>EmbyHub</b> 用户自助服务机器人\n\n你还没有绑定账号，请先完成绑定或注册：",
         {"menu": None},
     )]
 

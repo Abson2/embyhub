@@ -1,5 +1,5 @@
 ﻿﻿{% extends "layout.html" %}
-{% block title %}插件中心 - EmbyPulse{% endblock %}
+{% block title %}插件中心 - EmbyHub{% endblock %}
 {% block content %}
 <div class="w-full py-2 pb-32 px-2 sm:px-4 md:px-8 flex flex-col gap-6 md:gap-8">
     <div class="bg-white dark:bg-[#1C1C1E] rounded-3xl shadow-sm border border-gray-100 dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6 w-full p-5 md:p-6 shrink-0">
@@ -10,7 +10,7 @@
             <div>
                 <h2 class="text-xl md:text-[22px] font-bold tracking-tight text-gray-900 dark:text-white">插件中心</h2>
                 <div class="text-[12px] text-gray-500 mt-1 font-medium flex items-center gap-1.5">
-                    <i class="fa-solid fa-cube opacity-70"></i> <span>扩展你的 EmbyPulse 能力边界</span>
+                    <i class="fa-solid fa-cube opacity-70"></i> <span>扩展你的 EmbyHub 能力边界</span>
                 </div>
             </div>
         </div>
@@ -238,7 +238,7 @@
         <div class="p-5 overflow-y-auto mac-scrollbar flex-1 space-y-5">
             <div class="flex items-center justify-between">
                 <p class="text-[12px] text-gray-500">管理访问令牌、查阅接口文档，供脚本与插件调用网页功能。</p>
-                <a href="/openapi.json" download="emby-pulse-openapi.json" class="px-3.5 py-2 text-[12px] font-bold rounded-xl bg-sky-500 text-white hover:bg-sky-600 transition-colors shrink-0"><i class="fa-solid fa-download mr-1"></i>下载 OpenAPI 规范</a>
+                <a href="/openapi.json" download="embyhub-openapi.json" class="px-3.5 py-2 text-[12px] font-bold rounded-xl bg-sky-500 text-white hover:bg-sky-600 transition-colors shrink-0"><i class="fa-solid fa-download mr-1"></i>下载 OpenAPI 规范</a>
             </div>
             <div class="rounded-2xl border border-gray-100 dark:border-white/5 p-4">
                 <div class="flex items-center justify-between mb-2">
@@ -537,7 +537,7 @@
                             <input type="password" id="user-backup-webdav-password" placeholder="密码" class="bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-purple-500">
                         </div>
                         <div class="flex gap-2">
-                            <input type="text" id="user-backup-webdav-path" placeholder="存储路径" value="/backups/embypulse/" class="flex-1 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <input type="text" id="user-backup-webdav-path" placeholder="存储路径" value="/backups/embyhub/" class="flex-1 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-purple-500">
                             <button onclick="userBackupTestWebDAV()" class="px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-lg text-[12px] transition-colors">
                                 <i class="fa-solid fa-plug mr-1"></i>测试
                             </button>
@@ -4085,7 +4085,7 @@
                 document.getElementById('user-backup-webdav-url').value = config.webdav_url || '';
                 document.getElementById('user-backup-webdav-user').value = config.webdav_user || '';
                 document.getElementById('user-backup-webdav-password').value = config.webdav_password || '';
-                document.getElementById('user-backup-webdav-path').value = config.webdav_path || '/backups/embypulse/';
+                document.getElementById('user-backup-webdav-path').value = config.webdav_path || '/backups/embyhub/';
             }
         } catch (e) {
             console.error('加载配置失败:', e);
@@ -6327,7 +6327,7 @@ async function openPluginMarket() {
             return;
         }
         list.innerHTML = items.map(function (item) {
-            const extra = item.min_app_version ? ' · 需 EmbyPulse ' + epEsc(item.min_app_version) : '';
+            const extra = item.min_app_version ? ' · 需 EmbyHub ' + epEsc(item.min_app_version) : '';
             return '<div class="flex items-center gap-3 p-3.5 rounded-xl border border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-black/20">'
                 + '<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-puzzle-piece text-[14px]"></i></div>'
                 + '<div class="flex-1 min-w-0">'

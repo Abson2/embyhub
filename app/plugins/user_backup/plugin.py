@@ -64,7 +64,7 @@ class UserBackupPlugin(PluginBase):
     icon = "fa-database"
     icon_color = "from-blue-500 to-cyan-500"
     version = "1.1.0"
-    author = "EmbyPulse"
+    author = "EmbyHub"
     pro_only = True
 
     def __init__(self):
@@ -89,7 +89,7 @@ class UserBackupPlugin(PluginBase):
             "url": config.get("webdav_url", ""),
             "user": config.get("webdav_user", ""),
             "password": config.get("webdav_password", ""),
-            "path": config.get("webdav_path", "/backups/embypulse/")
+            "path": config.get("webdav_path", "/backups/embyhub/")
         }
 
     def _upload_to_webdav(self, filename: str, file_data: bytes) -> bool:

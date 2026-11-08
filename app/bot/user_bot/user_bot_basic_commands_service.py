@@ -77,11 +77,11 @@ def cmd_start(chat_id, tg_user_id, tg_name):
     binding = _get_binding_provider()(tg_user_id)
     if binding:
         msg = (f"👋 欢迎回来，<b>{binding['emby_username']}</b>！\n\n"
-               f"🎬 EmbyPulse 用户自助服务\n"
+               f"🎬 EmbyHub 用户自助服务\n"
                f"请选择你需要的服务：")
     else:
         msg = (f"👋 你好 <b>{tg_name}</b>！\n\n"
-               f"🎬 这是 <b>EmbyPulse</b> 用户自助服务机器人\n\n"
+               f"🎬 这是 <b>EmbyHub</b> 用户自助服务机器人\n\n"
                f"你还没有绑定账号，请先完成绑定或注册：")
     _send_provider()(chat_id, msg, reply_markup=_main_menu_keyboard_provider()(binding))
 
@@ -91,7 +91,7 @@ def cmd_help(chat_id, tg_user_id):
     status = f"✅ 已绑定：<b>{binding['emby_username']}</b>" if binding else "❌ 未绑定账号"
     _send_provider()(
         chat_id,
-        f"🤖 <b>EmbyPulse 用户助手</b>\n\n{status}\n\n"
+        f"🤖 <b>EmbyHub 用户助手</b>\n\n{status}\n\n"
         "📋 <b>命令列表</b>\n"
         "/bind 用户名 — 绑定 Emby 账号\n"
         "/register — 开放注册\n"

@@ -43,7 +43,7 @@ class TempAccountPlugin(PluginBase):
     icon = "fa-user-clock"
     icon_color = "from-violet-500 to-purple-500"
     version = "1.0.0"
-    author = "EmbyPulse"
+    author = "EmbyHub"
     pro_only = True  # Pro 专享
 
     def __init__(self):

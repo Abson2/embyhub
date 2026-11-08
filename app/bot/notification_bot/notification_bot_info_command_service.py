@@ -20,7 +20,7 @@ _today_updates_provider = _default_get_today_updates
 _format_notify_message_provider = _default_format_notify_message
 
 
-HELP_MESSAGE = ("🤖 <b>EmbyPulse 智能助理指南</b>\n\n"
+HELP_MESSAGE = ("🤖 <b>EmbyHub 智能助理指南</b>\n\n"
                 "📊 <b>数据报表指令</b>\n"
                 "/stats - 获取今日播放大盘与用户排行\n"
                 "/weekly - 获取本周全站数据周报\n"

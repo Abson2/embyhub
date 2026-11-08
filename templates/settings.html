@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block title %}系统设置 - EmbyPulse{% endblock %}
+{% block title %}系统设置 - EmbyHub{% endblock %}
 
 {% block head %}
 <!-- Quill Editor -->
@@ -350,7 +350,7 @@
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider pl-1 flex items-center gap-1.5">
-                            EmbyPulse 公网地址
+                            EmbyHub 公网地址
                             <span class="setting-tip">
                                 <i class="fa-solid fa-circle-question setting-tip-icon text-[12px]"></i>
                                 <span class="setting-tooltip">求片推送到 TG 机器人后，审批完成跳转回此地址。填写当前系统的公网访问地址即可</span>
@@ -2625,7 +2625,7 @@ function initWelcomeQuill() {
     
     welcomeQuill = new Quill('#welcome-editor', {
         theme: 'snow',
-        placeholder: '欢迎加入 EmbyPulse！\n\n请遵守以下规则：\n1. 不要分享账号\n2. 不要下载资源\n\n有问题请联系管理员。',
+        placeholder: '欢迎加入 EmbyHub！\n\n请遵守以下规则：\n1. 不要分享账号\n2. 不要下载资源\n\n有问题请联系管理员。',
         modules: {
             toolbar: [
                 // 文字格式（内联）
@@ -3327,7 +3327,7 @@ html.dark .ql-snow .ql-picker.ql-expanded .ql-picker-options {
             <div class="mb-4">
                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">应用名称</label>
                 <div class="flex gap-2">
-                    <input type="text" id="pwa-app-name-input" placeholder="用户中心 - EmbyPulse" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                    <input type="text" id="pwa-app-name-input" placeholder="用户中心 - EmbyHub" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent">
                     <button onclick="saveAppName()" id="pwa-name-btn" class="px-4 py-2 bg-violet-500 hover:bg-violet-600 text-white rounded-lg text-sm font-bold transition">
                         保存
                     </button>

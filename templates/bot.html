@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block title %}机器人助手 - EmbyPulse{% endblock %}
+{% block title %}机器人助手 - EmbyHub{% endblock %}
 
 {% block head %}
 <style>
@@ -247,7 +247,7 @@
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider pl-1">分组</label>
-                        <input type="text" id="bot-bark-group" class="w-full px-3 py-2.5 rounded-xl border border-transparent bg-gray-100 dark:bg-[#2C2C2E] text-[12px] text-gray-800 dark:text-gray-100 outline-none focus:ring-2 focus:ring-orange-500/50" placeholder="EMBYPULSE">
+                        <input type="text" id="bot-bark-group" class="w-full px-3 py-2.5 rounded-xl border border-transparent bg-gray-100 dark:bg-[#2C2C2E] text-[12px] text-gray-800 dark:text-gray-100 outline-none focus:ring-2 focus:ring-orange-500/50" placeholder="EMBYHUB">
                     </div>
                 </div>
 
@@ -639,7 +639,7 @@
                             </label>
                             <textarea id="user_bot_required_channels" rows="2"
                                 class="w-full px-3 py-2 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-white dark:bg-[#1C1C1E] text-[12px] text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-emerald-500/30 outline-none transition-all placeholder-gray-400"
-                                placeholder="@EmbyPulse_News&#10;-1001234567890"></textarea>
+                                placeholder="@EmbyHub_News&#10;-1001234567890"></textarea>
                             <p class="text-[10px] text-emerald-500/70 mt-1">💡 机器人需被添加为频道管理员</p>
                         </div>
 
@@ -1008,7 +1008,7 @@
                 server: (document.getElementById('bot-bark-server').value || '').trim(),
                 device_key: (document.getElementById('bot-bark-device-key').value || '').trim(),
                 sound: (document.getElementById('bot-bark-sound').value || '').trim() || 'default',
-                group: (document.getElementById('bot-bark-group').value || '').trim() || 'EMBYPULSE',
+                group: (document.getElementById('bot-bark-group').value || '').trim() || 'EMBYHUB',
                 notify_library_new: document.getElementById('bot-bark-notify-library-new').checked,
                 notify_request_new: document.getElementById('bot-bark-notify-request-new').checked
             }
@@ -1034,7 +1034,7 @@
                 barkDk.readOnly = false;
             }
             document.getElementById('bot-bark-sound').value = c.sound || 'default';
-            document.getElementById('bot-bark-group').value = c.group || 'EMBYPULSE';
+            document.getElementById('bot-bark-group').value = c.group || 'EMBYHUB';
             document.getElementById('bot-bark-notify-library-new').checked = c.notify_library_new !== false;
             document.getElementById('bot-bark-notify-request-new').checked = c.notify_request_new !== false;
         } catch (e) {

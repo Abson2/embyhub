@@ -1,5 +1,5 @@
 """
-EmbyPulse 用户 TG 机器人 (Pro 专属)
+EmbyHub 用户 TG 机器人 (Pro 专属)
 独立于管理员机器人，面向普通用户提供自助服务
 """
 import threading

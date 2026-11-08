@@ -49,7 +49,7 @@ def set_webhook_token(value: str) -> None:
 
 
 def ensure_strong_webhook_token() -> None:
-    weak_tokens = {"embypulse", "emby", "test", "123456", "password", ""}
+    weak_tokens = {"embyhub", "emby", "test", "123456", "password", ""}
     if get_webhook_token() in weak_tokens:
         set_webhook_token(secrets.token_urlsafe(32))
         logging.getLogger("uvicorn").warning("[安全] Webhook Token 已自动生成（原为弱 token），请更新 Emby Webhook 配置")

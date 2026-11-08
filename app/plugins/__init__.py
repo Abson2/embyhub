@@ -1,5 +1,5 @@
 """
-EmbyPulse 插件加载器
+EmbyHub 插件加载器
 启动时扫描 app/plugins/ 下所有子目录，自动发现并注册插件
 """
 import os

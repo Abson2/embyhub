@@ -48,12 +48,12 @@ def test_pwa_dao_paths_work_after_registry_bootstrap(monkeypatch, tmp_path):
 
     _use_temp_system_db(monkeypatch, tmp_path)
 
-    pwa_dao.save_pwa_config_value("app_name", "EmbyPulse")
+    pwa_dao.save_pwa_config_value("app_name", "EmbyHub")
     pwa_dao.save_pwa_config_value("default_icon", "icon-main")
     pwa_dao.set_user_pwa_icon("user-1", "icon-alt")
 
     assert pwa_dao.get_pwa_config_values() == {
-        "app_name": "EmbyPulse",
+        "app_name": "EmbyHub",
         "default_icon": "icon-main",
     }
     assert pwa_dao.get_user_pwa_icon("user-1") == "icon-alt"

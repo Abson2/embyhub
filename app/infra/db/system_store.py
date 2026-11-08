@@ -8,7 +8,7 @@ from .row import to_data_row
 
 
 class SystemStore:
-    """Explicit access boundary for the EmbyPulse system database."""
+    """Explicit access boundary for the EmbyHub system database."""
 
     def __init__(self, db_path: str = SYSTEM_DB_PATH):
         self.db_path = db_path
