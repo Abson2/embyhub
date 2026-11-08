@@ -116,7 +116,7 @@ docker pull abson2/embyhub:2.6            # Docker Hub（compose 默认）
 docker pull ghcr.io/abson2/embyhub:2.6    # GHCR 备用
 ```
 
-每次打 `v*` tag 发版，CI 在同一次运行中同步推送两处镜像并创建 GitHub Release——Release 出现时镜像已可拉取。CI 会自动把两个仓库设为公开并做匿名拉取自检，无需任何手动配置。
+每次打 `v*` tag 发版，CI 在同一次运行中同步推送两处镜像并创建 GitHub Release——Release 出现时镜像已可拉取。CI 会自动把 Docker Hub 仓库设为公开、校验 GHCR 可匿名访问，并对两处做匿名拉取自检，无需任何手动配置。
 
 ```yaml
 services:

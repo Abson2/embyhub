@@ -278,13 +278,26 @@ jobs:
           assert info.get("is_private") is False, "Docker Hub 仓库仍为 private"
           PY
 
-      - name: 确保 GHCR 包公开
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # GHCR 包通过 OCI org.opencontainers.image.source 关联到 public 仓库，
+      # 首次推送即继承 public；GitHub REST 没有可用的 visibility 端点（404），
+      # 因此这里只做匿名硬校验，防止以后被误改成 private。
+      - name: 校验 GHCR 包可匿名访问
         run: |
-          gh api -X PATCH -H "Accept: application/vnd.github+json" \
-            "/user/packages/container/embyhub/visibility" \
-            -f visibility=public
+          python3 - <<'PY'
+          import json, os, urllib.request
+          name = os.environ["GHCR_IMAGE"].split("/", 1)[1]
+          with urllib.request.urlopen(
+              "https://ghcr.io/token?scope=repository:%s:pull&service=ghcr.io" % name,
+              timeout=30) as r:
+              token = json.load(r)["token"]
+          req = urllib.request.Request(
+              "https://ghcr.io/v2/%s/tags/list" % name,
+              headers={"Authorization": "Bearer " + token})
+          with urllib.request.urlopen(req, timeout=30) as r:
+              tags = json.load(r)["tags"]
+          print("GHCR 匿名可见 tags:", tags)
+          assert "latest" in tags, "GHCR 包未公开或 latest 缺失"
+          PY
 
       - name: 匿名拉取自检（部署者无需登录）
         run: |
