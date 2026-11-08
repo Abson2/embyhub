@@ -138,6 +138,7 @@ def check_page_permission(request: Request, path: str):
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>无访问权限 - EmbyHub</title>
+    <link rel="icon" href="/static/img/favicon.png?v=20261108" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
@@ -326,8 +327,13 @@ async def get_apple_touch_icon():
 
 @router.get("/favicon.ico")
 async def get_favicon():
+    # 该 URL 不带版本串，浏览器会长期缓存；显式禁用缓存，避免换图标后
+    # 任何「回退到 /favicon.ico」的页面仍显示旧 logo。
     icon_path = os.path.join("static", "img", "favicon.png")
-    return FileResponse(icon_path)
+    return FileResponse(
+        icon_path,
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
 
 @router.get("/manifest.json")
 async def get_manifest():
