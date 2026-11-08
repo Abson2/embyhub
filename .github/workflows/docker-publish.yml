@@ -10,6 +10,10 @@ on:
         description: "补推无 v 前缀版本别名（如 2.6）；留空跳过"
         required: false
         default: ""
+      refresh_version:
+        description: "把本次构建的最新镜像覆盖到指定版本号（如 2.6），用于不升版本号的补丁发版；留空跳过"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -313,7 +317,7 @@ jobs:
 
   alias:
     name: 补齐双注册表版本别名（仅手动触发）
-    if: github.event_name == 'workflow_dispatch' && inputs.alias_version != ''
+    if: github.event_name == 'workflow_dispatch' && (inputs.alias_version != '' || inputs.refresh_version != '')
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -336,6 +340,7 @@ jobs:
       # 直接复制已有 manifest，不重新构建；同时把历史 tag 事件只推到
       # Docker Hub 的版本补齐到 GHCR，保证两处版本名一致。
       - name: 从 v 前缀 tag 复制 manifest（双注册表）
+        if: inputs.alias_version != '' && inputs.refresh_version == ''
         run: |
           set -e
           V="${{ inputs.alias_version }}"
@@ -344,6 +349,20 @@ jobs:
           docker buildx imagetools create --tag "ghcr.io/abson2/embyhub:v$V" "$SRC"
           docker buildx imagetools create --tag "ghcr.io/abson2/embyhub:$V" "$SRC"
           docker buildx imagetools inspect "ghcr.io/abson2/embyhub:$V"
+
+      # 不升版本号的补丁发版：main push / dispatch 的 build job 已把新镜像推到 latest，
+      # 这里把 latest 的 manifest 复制到版本 tag，使 docker compose 默认的 2.6 拿到新代码。
+      - name: 把本次构建覆盖到版本 tag（双注册表）
+        if: inputs.refresh_version != ''
+        run: |
+          set -e
+          V="${{ inputs.refresh_version }}"
+          SRC="abson2/embyhub:latest"
+          docker buildx imagetools create --tag "abson2/embyhub:$V" "$SRC"
+          docker buildx imagetools create --tag "abson2/embyhub:v$V" "$SRC"
+          docker buildx imagetools create --tag "ghcr.io/abson2/embyhub:$V" "$SRC"
+          docker buildx imagetools create --tag "ghcr.io/abson2/embyhub:v$V" "$SRC"
+          docker buildx imagetools inspect "abson2/embyhub:$V"
 
   release:
     name: 创建 GitHub Release（仅 tag 触发）

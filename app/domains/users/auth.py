@@ -646,7 +646,7 @@ async def get_avatar(request: Request, user_id: int):
     # 🔒 安全：需要登录才能访问
     session_user = request.session.get("user")
     if not session_user:
-        return RedirectResponse("/static/img/logo-app.png")
+        return RedirectResponse("/static/img/logo-app.png?v=20261108")
 
     # 🔒 IDOR 防护：非管理员仅可访问自己的头像
     if not is_admin_user(request):
@@ -656,7 +656,7 @@ async def get_avatar(request: Request, user_id: int):
         except (TypeError, ValueError):
             own_id_int = None
         if own_id_int != user_id:
-            return RedirectResponse("/static/img/logo-app.png")
+            return RedirectResponse("/static/img/logo-app.png?v=20261108")
 
     try:
         user = get_local_user_by_id(user_id, "avatar")
@@ -681,11 +681,11 @@ async def get_avatar(request: Request, user_id: int):
                 if avatar.startswith('/') and not avatar.startswith('//'):
                     return RedirectResponse(avatar)
                 else:
-                    return RedirectResponse("/static/img/logo-app.png")
+                    return RedirectResponse("/static/img/logo-app.png?v=20261108")
         # 返回默认头像
-        return RedirectResponse("/static/img/logo-app.png")
+        return RedirectResponse("/static/img/logo-app.png?v=20261108")
     except Exception as e:
-        return RedirectResponse("/static/img/logo-app.png")
+        return RedirectResponse("/static/img/logo-app.png?v=20261108")
 
 
 @router.post("/api/auth/avatar")

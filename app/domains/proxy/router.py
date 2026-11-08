@@ -389,7 +389,7 @@ def proxy_user_image(request: Request, user_id: str, tag: str = None, _user: dic
     # 🔒 安全：非管理员只能查看自己的头像
     current_id = _user.get("Id") or _user.get("id")
     if not is_admin_session(_user) and str(user_id) != str(current_id):
-        return RedirectResponse(url="/static/img/logo-app.png", status_code=302)
+        return RedirectResponse(url="/static/img/logo-app.png?v=20261108", status_code=302)
 
     try:
         params = {"width": 200, "height": 200, "mode": "Crop", "quality": 90}
@@ -404,12 +404,12 @@ def proxy_user_image(request: Request, user_id: str, tag: str = None, _user: dic
             )
         # 404 表示用户没有头像，返回默认头像（本地）
         elif resp.status_code == 404:
-            return RedirectResponse(url="/static/img/logo-app.png", status_code=302)
+            return RedirectResponse(url="/static/img/logo-app.png?v=20261108", status_code=302)
     except Exception:
         # 超时或连接失败，返回默认头像
         pass
     # 🔥 用户没有头像或请求失败时，返回本地默认头像，避免第三方泄露用户 IP
-    return RedirectResponse(url="/static/img/logo-app.png", status_code=302)
+    return RedirectResponse(url="/static/img/logo-app.png?v=20261108", status_code=302)
 
 @router.post("/api/proxy/clear_cache")
 def clear_image_cache(request: Request, item_ids: list = None):

@@ -283,7 +283,7 @@ function renderLibraries(libraries) {
         const imgUrl = `/api/proxy/image/${encodeURIComponent(lib.Id)}/primary${versionParam}`;
         const name = escapeHtml(lib.Name);
         html += `<div onclick="jumpToLibrary('${escapeHtml(lib.Id)}')" class="lib-card relative aspect-video rounded-2xl overflow-hidden cursor-pointer bg-gray-200 dark:bg-apple-hoverDark">
-            <img src="${imgUrl}" class="w-full h-full object-cover transition-all duration-500 opacity-0 hover:opacity-100 hover:scale-105" onload="this.style.opacity='0.9'" onerror="this.src='/static/img/logo-app.png';this.style.opacity='0.9'" loading="lazy">
+            <img src="${imgUrl}" class="w-full h-full object-cover transition-all duration-500 opacity-0 hover:opacity-100 hover:scale-105" onload="this.style.opacity='0.9'" onerror="this.src='/static/img/logo-app.png?v=20261108';this.style.opacity='0.9'" loading="lazy">
             <div class="absolute bottom-0 inset-x-0 p-3 pb-3 flex justify-center items-end bg-gradient-to-t from-black/60 to-transparent"><h4 class="text-white font-semibold text-sm md:text-[15px] truncate w-full text-center tracking-widest drop-shadow-md">${name}</h4></div>
         </div>`;
     });

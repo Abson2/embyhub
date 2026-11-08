@@ -388,7 +388,7 @@ async function fetchLibraries() {
             const imgUrl = `/api/proxy/image/${encodeURIComponent(lib.Id)}/primary${versionParam}`;
             const name = escapeHtml(lib.Name);
             html += `<div onclick="jumpToLibrary('${escapeHtml(lib.Id)}')" class="lib-card relative aspect-video rounded-2xl overflow-hidden cursor-pointer bg-gray-200 dark:bg-apple-hoverDark">
-                <img src="${imgUrl}" class="w-full h-full object-cover transition duration-500 opacity-90 hover:opacity-100 hover:scale-105" onerror="this.src='/static/img/logo-app.png'" loading="lazy">
+                <img src="${imgUrl}" class="w-full h-full object-cover transition duration-500 opacity-90 hover:opacity-100 hover:scale-105" onerror="this.src='/static/img/logo-app.png?v=20261108'" loading="lazy">
                 <div class="absolute bottom-0 inset-x-0 p-3 pb-3 flex justify-center items-end bg-gradient-to-t from-black/60 to-transparent"><h4 class="text-white font-semibold text-sm md:text-[15px] truncate w-full text-center tracking-widest drop-shadow-md">${name}</h4></div>
             </div>`;
         });
@@ -460,7 +460,7 @@ function buildLatestHtml(data) {
         html += `<div onclick="jumpToEmby('${escapeHtml(item.Id)}')" class="poster-card cursor-pointer relative overflow-hidden">
             ${badge}
             <div class="poster-img-wrap bg-gray-100 dark:bg-apple-hoverDark border border-gray-100 dark:border-white/5">
-                <img src="${imgUrl}" loading="lazy" class="transition-all duration-300 opacity-0" onload="this.style.opacity='1'" onerror="this.src='/static/img/logo-app.png';this.style.opacity='1'">
+                <img src="${imgUrl}" loading="lazy" class="transition-all duration-300 opacity-0" onload="this.style.opacity='1'" onerror="this.src='/static/img/logo-app.png?v=20261108';this.style.opacity='1'">
             </div>
             <div class="poster-title-wrap"><h4 class="poster-title text-[11px] font-medium text-gray-900 dark:text-gray-100 leading-tight transition-colors line-clamp-2">${escapeHtml(title)}${titleSuffix}</h4></div>
         </div>`;
@@ -512,7 +512,7 @@ function buildRecentHtml(data) {
         const imgUrl = `/api/proxy/image/${encodeURIComponent(item.ItemId)}/primary${versionParam}`;
         html += `<div onclick="jumpToEmby('${escapeHtml(item.ItemId)}')" class="poster-card cursor-pointer">
             <div class="poster-img-wrap bg-gray-100 dark:bg-apple-hoverDark border border-gray-100 dark:border-white/5">
-                <img src="${imgUrl}" loading="lazy" class="transition-all duration-300 opacity-0" onload="this.style.opacity='1'" onerror="this.src='/static/img/logo-app.png';this.style.opacity='1'">
+                <img src="${imgUrl}" loading="lazy" class="transition-all duration-300 opacity-0" onload="this.style.opacity='1'" onerror="this.src='/static/img/logo-app.png?v=20261108';this.style.opacity='1'">
                 <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent flex items-end"><p class="text-[10px] text-white font-medium truncate flex items-center w-full drop-shadow-md"><i class="fa-solid fa-play text-[8px] mr-1.5 opacity-80"></i>${escapeHtml(item.UserName)}</p></div>
             </div>
             <div class="poster-title-wrap"><h4 class="poster-title text-[11px] font-medium text-gray-900 dark:text-gray-100 leading-tight transition-colors line-clamp-2">${escapeHtml(item.DisplayName || item.ItemName)}</h4></div>
@@ -607,9 +607,9 @@ async function fetchTodayCalendar() {
             const stMap = { ready: { cls: 'bg-emerald-500', label: '已入库' }, missing: { cls: 'bg-red-500', label: '缺失' }, today: { cls: 'bg-amber-500', label: '今日' }, upcoming: { cls: 'bg-gray-400', label: '待播' } };
             const s = stMap[ep.status] || stMap.upcoming;
             const epNum = typeof ep.episode === 'string' ? `E${ep.episode}` : `E${String(ep.episode).padStart(2,'0')}`;
-            const poster = ep.poster_path ? `https://image.tmdb.org/t/p/w92${ep.poster_path}` : '/static/img/logo-app.png';
+            const poster = ep.poster_path ? `https://image.tmdb.org/t/p/w92${ep.poster_path}` : '/static/img/logo-app.png?v=20261108';
             html += `<div class="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-                <div class="w-10 h-14 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 shrink-0 shadow-sm"><img src="${poster}" class="w-full h-full object-cover" onerror="this.src='/static/img/logo-app.png'"></div>
+                <div class="w-10 h-14 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 shrink-0 shadow-sm"><img src="${poster}" class="w-full h-full object-cover" onerror="this.src='/static/img/logo-app.png?v=20261108'"></div>
                 <div class="flex-1 min-w-0">
                     <p class="text-[13px] font-semibold text-gray-800 dark:text-gray-200 truncate">${escapeHtml(ep.series_name)}</p>
                     <p class="text-[11px] text-gray-500 mt-0.5">S${String(ep.season).padStart(2,'0')}${epNum}</p>

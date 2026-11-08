@@ -1,7 +1,7 @@
 <!-- 🔥 登录弹窗 -->
 <div x-show="!isLoggedIn && isLoaded" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak x-init="loadLoginBackground()">
     <!-- 🔥 TMDB 海报背景 -->
-    <div id="login-bg-poster" class="absolute inset-0 z-[-2] bg-cover bg-center transition-all duration-[1500ms] opacity-0 scale-[1.02]" style="background-image: url('/static/img/logo-app-2.png')"></div>
+    <div id="login-bg-poster" class="absolute inset-0 z-[-2] bg-cover bg-center transition-all duration-[1500ms] opacity-0 scale-[1.02]" style="background-image: url('/static/img/logo-app-2.png?v=20261108')"></div>
     <!-- 🔥 深色遮罩层 -->
     <div class="absolute inset-0 z-[-1] bg-black/40 dark:bg-black/60"></div>
     
@@ -24,7 +24,7 @@
         <div x-show="loginMode === 'login'">
             <div class="text-center mb-8">
                 <div class="w-16 h-16 mx-auto mb-4 bg-white dark:bg-[#2C2C2E] rounded-2xl flex items-center justify-center shadow-lg border border-slate-200/50 dark:border-white/10">
-                    <img src="/static/img/logo-app-2.png" class="w-12 h-12 object-contain" alt="用户社区">
+                    <img src="/static/img/logo-app-2.png?v=20261108" class="w-12 h-12 object-contain" alt="用户社区">
                 </div>
                 <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">用户社区</h2>
                 <p class="text-slate-600 dark:text-zinc-400 mt-2 text-sm">请输入 Emby 账号登录（无密码用户密码留空）</p>
@@ -73,7 +73,7 @@
         <div x-show="loginMode === 'register'" x-transition class="relative z-10">
             <div class="text-center mb-8">
                 <div class="w-16 h-16 mx-auto mb-4 bg-white dark:bg-[#2C2C2E] rounded-2xl flex items-center justify-center shadow-lg border border-slate-200/50 dark:border-white/10">
-                    <img src="/static/img/logo-app-2.png" class="w-12 h-12 object-contain" alt="用户社区">
+                    <img src="/static/img/logo-app-2.png?v=20261108" class="w-12 h-12 object-contain" alt="用户社区">
                 </div>
                 <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">注册账号</h2>
                 <p class="text-slate-600 dark:text-zinc-400 mt-2 text-sm">使用邀请码创建您的 Emby 账号</p>

@@ -326,7 +326,7 @@ async def get_apple_touch_icon():
 
 @router.get("/favicon.ico")
 async def get_favicon():
-    icon_path = os.path.join("static", "img", "logo-app.png")
+    icon_path = os.path.join("static", "img", "favicon.png")
     return FileResponse(icon_path)
 
 @router.get("/manifest.json")
@@ -338,7 +338,7 @@ async def get_manifest():
         "display": "standalone",
         "background_color": "#ffffff",
         "theme_color": "#4f46e5",
-        "icons": [{"src": "/static/img/logo-app.png", "sizes": "180x180", "type": "image/png"}, {"src": "/static/img/logo-app.png", "sizes": "512x512", "type": "image/png"}]
+        "icons": [{"src": "/static/img/logo-app.png?v=20261108", "sizes": "180x180", "type": "image/png"}, {"src": "/static/img/logo-app.png?v=20261108", "sizes": "512x512", "type": "image/png"}]
     })
 
 from fastapi.responses import PlainTextResponse

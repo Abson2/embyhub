@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %}EmbyHub Admin{% endblock %}</title>
-    <link rel="icon" href="/static/img/favicon.png" type="image/png">
+    <link rel="icon" href="/static/img/favicon.png?v=20261108" type="image/png">
     
     <!-- 🔥 DNS 预连接 + 资源预加载（加速 CDN 资源加载） -->
     <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
     <meta name="theme-color" content="#4f46e5">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261108">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="EmbyHub">
@@ -240,11 +240,11 @@
     <aside class="w-[240px] h-screen sticky top-0 bg-apple-cardLight dark:bg-apple-cardDark border-r border-apple-borderLight dark:border-apple-borderDark hidden md:flex flex-col shrink-0 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] dark:shadow-none">
         
         <div class="px-6 pt-5 pb-6 flex items-center gap-3.5 shrink-0">
-            <img src="/static/img/logo-app.png" class="w-10 h-10 drop-shadow-md">
+            <img src="/static/img/logo-app.png?v=20261108" alt="EmbyHub" class="w-11 h-11 -ml-1 shrink-0">
             <div class="flex flex-col">
                 <div class="flex items-center leading-none">
-                    <span class="font-black text-[20px] tracking-tight text-gray-900 dark:text-white">EMBY</span>
-                    <span class="font-black text-[20px] tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-brand-500 to-indigo-500 italic ml-1">PULSE</span>
+                    <span class="font-black text-[20px] tracking-tight text-gray-900 dark:text-white">Emby</span>
+                    <span class="font-black text-[20px] tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-brand-500 to-indigo-500 italic -ml-0.5">Hub</span>
                 </div>
                 <div class="flex items-center justify-center mt-1.5 gap-2">
                     <span class="text-[9px] font-black bg-gray-100 dark:bg-white/5 text-gray-400 dark:text-gray-500 px-2 py-0.5 rounded-lg border border-gray-200/50 dark:border-white/5 uppercase tracking-[0.2em] leading-none">
@@ -343,9 +343,9 @@
             <div class="relative z-10 flex items-center justify-between w-full h-full px-4 md:px-8">
                 
                 <div class="flex items-center gap-1 md:hidden min-w-0 flex-1 overflow-hidden">
-                    <img src="/static/img/logo-app.png" class="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 drop-shadow-sm shrink-0">
-                    <span class="font-black text-sm xs:text-base sm:text-lg tracking-tight text-gray-900 dark:text-white shrink-0">EMBY</span>
-                    <span class="font-black text-sm xs:text-base sm:text-lg tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-brand-500 to-indigo-500 italic -ml-0.5 shrink-0">PULSE</span>
+                    <img src="/static/img/logo-app.png?v=20261108" alt="EmbyHub" class="w-7 h-7 xs:w-8 xs:h-8 sm:w-9 sm:h-9 shrink-0">
+                    <span class="font-black text-sm xs:text-base sm:text-lg tracking-tight text-gray-900 dark:text-white shrink-0">Emby</span>
+                    <span class="font-black text-sm xs:text-base sm:text-lg tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-brand-500 to-indigo-500 italic -ml-0.5 shrink-0">Hub</span>
                     {% if is_pro %}
                     <span class="pro-glow-tag text-[5px] xs:text-[6px] sm:text-[7px] font-black text-white px-0.5 xs:px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider leading-none shadow-sm shadow-amber-500/20 italic shrink-0">PRO</span>
                     {% endif %}
@@ -859,7 +859,7 @@
                         const item = s.NowPlayingItem || {}; const playState = s.PlayState || {}; const imgTargetId = item.PrimaryImageItemId || item.SeriesId || item.ParentId || s.ItemId || item.Id; const jumpId = item.Id || s.ItemId; const rawTitle = item.SeriesName ? `${item.SeriesName} - ${item.Name}` : (item.Name || '未知内容'); const safeTitleForUrl = encodeURIComponent(rawTitle); const imgUrl = `/api/proxy/smart_image?item_id=${imgTargetId}&type=Primary&name=${safeTitleForUrl}`;
                         let percentage = 0; let currentStr = "00:00"; let totalStr = "00:00";
                         if (item.RunTimeTicks && item.RunTimeTicks > 0) { percentage = Math.round((playState.PositionTicks / item.RunTimeTicks) * 100); currentStr = formatTicks(playState.PositionTicks); totalStr = formatTicks(item.RunTimeTicks); }
-                        html += `<div onclick="if(globalEmbyBaseUrl) window.open('${globalEmbyBaseUrl}/web/index.html#!/item?id=${jumpId}&serverId=${globalEmbyServerId}')" class="flex gap-3 p-3 hover:bg-gray-50/50 dark:hover:bg-white/5 rounded-xl transition-colors cursor-pointer group"><div class="w-12 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 relative shadow-sm border border-gray-200/50 dark:border-white/5"><img src="${imgUrl}" onerror="this.src='/static/img/favicon.png'" class="w-full h-full object-cover"></div><div class="flex flex-col justify-center flex-1 min-w-0"><div class="flex items-center justify-between mb-1.5"><span class="text-[11px] font-bold text-brand-500 truncate mr-2">${s.UserName || s.User || '未知'}</span><span class="text-[10px] font-mono text-gray-500 dark:text-gray-400 font-medium shrink-0 bg-gray-100 dark:bg-apple-hoverDark px-1.5 py-0.5 rounded shadow-sm border border-transparent dark:border-white/5">${currentStr} / ${totalStr}</span></div><h4 class="text-[13px] font-bold text-gray-800 dark:text-gray-200 truncate mb-2 group-hover:text-brand-500 transition-colors">${rawTitle}</h4><div class="flex items-center gap-2"><div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden shadow-inner"><div class="bg-brand-500 h-1.5 rounded-full transition-all duration-1000" style="width: ${percentage}%"></div></div></div></div></div>`;
+                        html += `<div onclick="if(globalEmbyBaseUrl) window.open('${globalEmbyBaseUrl}/web/index.html#!/item?id=${jumpId}&serverId=${globalEmbyServerId}')" class="flex gap-3 p-3 hover:bg-gray-50/50 dark:hover:bg-white/5 rounded-xl transition-colors cursor-pointer group"><div class="w-12 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 relative shadow-sm border border-gray-200/50 dark:border-white/5"><img src="${imgUrl}" onerror="this.src='/static/img/favicon.png?v=20261108'" class="w-full h-full object-cover"></div><div class="flex flex-col justify-center flex-1 min-w-0"><div class="flex items-center justify-between mb-1.5"><span class="text-[11px] font-bold text-brand-500 truncate mr-2">${s.UserName || s.User || '未知'}</span><span class="text-[10px] font-mono text-gray-500 dark:text-gray-400 font-medium shrink-0 bg-gray-100 dark:bg-apple-hoverDark px-1.5 py-0.5 rounded shadow-sm border border-transparent dark:border-white/5">${currentStr} / ${totalStr}</span></div><h4 class="text-[13px] font-bold text-gray-800 dark:text-gray-200 truncate mb-2 group-hover:text-brand-500 transition-colors">${rawTitle}</h4><div class="flex items-center gap-2"><div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden shadow-inner"><div class="bg-brand-500 h-1.5 rounded-full transition-all duration-1000" style="width: ${percentage}%"></div></div></div></div></div>`;
                     });
                     listContainer.innerHTML = html;
                 } else { badge.classList.add('hidden'); statusText.innerText = `空闲中`; listContainer.innerHTML = `<div class="py-12 text-center text-xs text-gray-400 font-medium"><i class="fa-solid fa-satellite text-3xl mb-3 opacity-20 block"></i>当前暂无播放</div>`; }
@@ -1119,14 +1119,14 @@
             html += '<div class="space-y-2">';
             
             tmdbList.forEach((item, index) => {
-                const posterUrl = item.poster ? `https://image.tmdb.org/t/p/w200${item.poster}` : '/static/img/logo-app.png';
+                const posterUrl = item.poster ? `https://image.tmdb.org/t/p/w200${item.poster}` : '/static/img/logo-app.png?v=20261108';
                 const typeBadge = item.type === 'tv' ? 
                     '<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400">剧集</span>' :
                     '<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">电影</span>';
                 
                 html += `
                 <div class="flex gap-3 p-3 bg-white dark:bg-[#2C2C2E] rounded-xl border border-gray-100 dark:border-white/5 hover:border-brand-200 dark:hover:border-brand-500/30 cursor-pointer transition-all" onclick="selectTmdbAndSearch(${item.id}, '${item.type}', ${index})">
-                    <img src="${posterUrl}" onerror="this.src='/static/img/logo-app.png'" class="w-16 h-24 object-cover rounded-lg bg-gray-100 dark:bg-[#2C2C2E] shrink-0">
+                    <img src="${posterUrl}" onerror="this.src='/static/img/logo-app.png?v=20261108'" class="w-16 h-24 object-cover rounded-lg bg-gray-100 dark:bg-[#2C2C2E] shrink-0">
                     <div class="flex-1 flex flex-col justify-center">
                         <div class="flex items-center gap-2 mb-1">
                             ${typeBadge}
@@ -1187,7 +1187,7 @@
                 }
                 const yearText = item.year ? `<span class="text-[12px] font-mono font-bold text-gray-400 ml-2 shrink-0">${item.year}</span>` : '';
                 html += `<a href="${item.emby_url}" target="_blank" class="flex gap-4 p-3 mb-2 bg-transparent hover:bg-gray-50 dark:hover:bg-black/20 rounded-[16px] cursor-pointer transition-all group border border-transparent hover:border-gray-200/60 dark:hover:border-white/5 hover:shadow-sm">
-                    <img src="${item.poster}" onerror="this.src='/static/img/logo-app.png';" class="w-16 h-24 object-cover rounded-[10px] bg-gray-100 dark:bg-[#2C2C2E] shrink-0 border border-gray-200/50 dark:border-white/5 shadow-sm group-hover:scale-105 transition-transform">
+                    <img src="${item.poster}" onerror="this.src='/static/img/logo-app.png?v=20261108';" class="w-16 h-24 object-cover rounded-[10px] bg-gray-100 dark:bg-[#2C2C2E] shrink-0 border border-gray-200/50 dark:border-white/5 shadow-sm group-hover:scale-105 transition-transform">
                     <div class="flex-1 min-w-0 flex flex-col justify-center overflow-hidden">
                         <div class="flex items-center mb-1.5 overflow-hidden">
                             <h4 class="font-bold text-[15px] text-gray-900 dark:text-white truncate group-hover:text-brand-500 transition-colors">${item.name}</h4>${yearText}
@@ -1226,7 +1226,7 @@
             // 显示 TMDB 信息卡片
             if (tmdbInfo) {
                 // 处理海报和背景URL
-                let posterUrl = '/static/img/logo-app.png';
+                let posterUrl = '/static/img/logo-app.png?v=20261108';
                 let backdropUrl = '';
                 
                 if (tmdbInfo.poster) {
@@ -1258,7 +1258,7 @@
                     ${backdropUrl ? `<img src="${backdropUrl}" class="absolute inset-0 w-full h-full object-cover opacity-20 dark:opacity-30 group-hover:opacity-30 dark:group-hover:opacity-40 transition-opacity">` : ''}
                     <div class="absolute inset-0 bg-gradient-to-t from-white/90 via-white/50 to-transparent dark:from-black/90 dark:via-black/50 dark:to-transparent"></div>
                     <div class="relative flex gap-4 p-4">
-                        <img src="${posterUrl}" onerror="this.src='/static/img/logo-app.png'" class="w-20 h-28 object-cover rounded-xl shadow-lg border border-gray-200/50 dark:border-white/10 shrink-0">
+                        <img src="${posterUrl}" onerror="this.src='/static/img/logo-app.png?v=20261108'" class="w-20 h-28 object-cover rounded-xl shadow-lg border border-gray-200/50 dark:border-white/10 shrink-0">
                         <div class="flex-1 flex flex-col justify-between py-1">
                             <div>
                                 <div class="flex items-center gap-2 mb-1">
@@ -1343,7 +1343,7 @@
             console.log('Resources count:', resources.length);
             
             // 填充详情 - poster 和 backdrop 已经是完整路径或需要拼接
-            let posterUrl = '/static/img/logo-app.png';
+            let posterUrl = '/static/img/logo-app.png?v=20261108';
             let backdropUrl = '';
             
             if (tmdbInfo?.poster) {

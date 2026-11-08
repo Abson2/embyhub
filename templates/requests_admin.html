@@ -184,7 +184,7 @@
 
                     <div class="shrink-0 ml-7">
                         <!-- 🔥 封面处理：智能判断路径类型 -->
-                        <img :src="getPosterUrl(item.poster_path)" class="w-16 h-24 md:w-20 md:h-28 rounded-xl object-cover shadow-md bg-gray-100 dark:bg-[#2C2C2E] border border-gray-100 dark:border-white/5" onerror="this.src='/static/img/logo-app.png'">
+                        <img :src="getPosterUrl(item.poster_path)" class="w-16 h-24 md:w-20 md:h-28 rounded-xl object-cover shadow-md bg-gray-100 dark:bg-[#2C2C2E] border border-gray-100 dark:border-white/5" onerror="this.src='/static/img/logo-app.png?v=20261108'">
                     </div>
 
                     <div class="flex-1 min-w-0 flex flex-col justify-between">
@@ -1011,7 +1011,7 @@ function showNotifyToast(message, type = 'success') {
 // ========== 以下为 Alpine.js 组件代码 ==========
     // 🔥 智能封面 URL 处理函数
     function getPosterUrl(posterPath) {
-        if (!posterPath) return '/static/img/logo-app.png';
+        if (!posterPath) return '/static/img/logo-app.png?v=20261108';
         
         // 🔥 本地 API 路径：以 /api/ 开头（包括带 ? 参数的）
         if (posterPath.startsWith('/api/')) {
@@ -1033,7 +1033,7 @@ function showNotifyToast(message, type = 'success') {
         }
         
         // 其他情况：返回默认图
-        return '/static/img/logo-app.png';
+        return '/static/img/logo-app.png?v=20261108';
     }
 
     document.addEventListener('alpine:init', () => {
