@@ -182,7 +182,13 @@ docker compose up -d
 
 ---
 
-## 四、许可证与开源协议
+## 四、支持
+
+如果这个项目对你有帮助，欢迎点右上角 Star，也欢迎自愿赞赏。
+
+<img src="static/img/sponsor-wechat.jpg" alt="微信赞赏码" width="240">
+
+## 五、许可证与开源协议
 
 本项目基于 MIT 许可证开源，但必须遵守以下附加条款：
 
