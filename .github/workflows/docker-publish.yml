@@ -5,6 +5,11 @@ on:
     branches: [main]
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      alias_version:
+        description: "补推无 v 前缀版本别名（如 2.6）；留空跳过"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -123,6 +128,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: 计算无 v 前缀版本号
+        id: ver
+        # v2.6 这类两段式版本号不满足 semver，type=semver 会静默不产出 tag，
+        # 而 compose 默认拉取 abson2/embyhub:2.6，因此显式补一条 raw 规则。
+        run: |
+          echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -131,6 +143,7 @@ jobs:
           tags: |
             type=raw,value=latest
             type=ref,event=tag
+            type=raw,value=${{ steps.ver.outputs.value }},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
             type=semver,pattern={{version}}
             type=sha
 
@@ -211,6 +224,29 @@ jobs:
       - name: 清理
         if: always()
         run: docker rm -f ep-smoke || true
+
+  alias:
+    name: 补推无 v 前缀版本别名（仅手动触发）
+    if: github.event_name == 'workflow_dispatch' && inputs.alias_version != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 直接复制已有 manifest，不重新构建，秒级完成；用于修复历史两段式版本 tag 缺失。
+      - name: 从 v 前缀 tag 复制 manifest
+        run: |
+          set -e
+          SRC="abson2/embyhub:v${{ inputs.alias_version }}"
+          DST="abson2/embyhub:${{ inputs.alias_version }}"
+          docker buildx imagetools create --tag "$DST" "$SRC"
+          docker buildx imagetools inspect "$DST"
 
   release:
     name: 创建 GitHub Release（仅 tag 触发）
