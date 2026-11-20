@@ -124,6 +124,14 @@ try:
 except Exception:  # 部分部署未配置媒体服务器时仍可加载插件
     media_api = None
 
+# TMDB 详情客户端（规则元数据补全）：仅用于修复 TgtoDrive 前端"正在匹配 TMDB"。
+# 生产环境可注入真实客户端；测试/未配置场景保持 None，_tmdb_meta 自动降级为空串。
+tmdb_client = None
+try:
+    from app.infra.clients.tmdb_client import tmdb_client
+except Exception:
+    tmdb_client = None
+
 logger = logging.getLogger("uvicorn")
 
 # 待同步状态集合：下载中(1) / 手动接单(4)
@@ -177,6 +185,17 @@ RULE_SWITCH = {
 
 # 字段名仍可通过插件配置覆盖（万一 TgtoDrive 升级改名，无需改代码）。
 # 但默认值已是附件实证的真名，1.6.0 用户若曾手填 must_include 需清空或改回。
+
+# 规则元数据字段（v2.2.0 补强，依据资料库《TgtoDrive联动复用说明》第六节）。
+# TgtoDrive 前端据 poster/backdrop/overview/original_title 是否为空判定"已匹配 TMDB"；
+# 这 6 个字段旧版 build_rule 未写，导致写入规则一直显示"正在匹配 TMDB"。
+RULE_META_KEYS = (
+    "poster_path", "poster_url", "backdrop_path", "backdrop_url",
+    "overview", "original_title",
+)
+TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p"
+TMDB_POSTER_SIZE = "w500"
+TMDB_BACKDROP_SIZE = "w780"
 
 
 class TgtoDriveError(Exception):
@@ -271,6 +290,76 @@ def _as_int(value, default=None):
         return int(str(value).strip())
     except (TypeError, ValueError):
         return default
+
+
+# TMDB 元数据进程内缓存：key=(tmdb_id, media_type)，value=(timestamp, meta)。
+# 作用有二：① 同一批/短期内重复工单不重复打 TMDB（限流，对齐经验文档"SCAN 场景限流"）；
+# ② 无 TMDB 密钥/查询失败时缓存空结果，避免每条规则都触发一次失败请求。
+_TMDB_META_CACHE = {}
+_TMDB_META_TTL = 6 * 3600  # 6 小时；元数据变化极慢，缓存足够安全
+
+
+def _tmdb_meta(tmdb_id, media_type, client=None):
+    """补全 TgtoDrive 规则元数据，修复前端"正在匹配 TMDB"。
+
+    依据资料库《TgtoDrive联动复用说明》第六节：取 TMDB 详情的
+    poster_path/backdrop_path/overview/original_title，并拼好 poster_url(w500)、
+    backdrop_url(w780)。任何失败（无客户端/无密钥/网络异常/字段缺失）都返回
+    6 个字段的空串，绝不抛异常、绝不阻断求片审核写入（降级不阻断）。
+
+    参数 client 便于测试注入假 TMDB 客户端；不传则用模块级 tmdb_client。
+    """
+    empty = {k: "" for k in RULE_META_KEYS}
+    try:
+        tid = int(tmdb_id)
+    except (TypeError, ValueError):
+        return empty
+    cli = client if client is not None else tmdb_client
+    if cli is None:
+        return empty
+
+    mt = str(media_type or "movie").strip().lower()
+    key = (tid, mt)
+    now = time.time()
+    cached = _TMDB_META_CACHE.get(key)
+    if cached and (now - cached[0]) < _TMDB_META_TTL:
+        return dict(cached[1])
+
+    meta = dict(empty)
+    try:
+        if mt == "tv":
+            resp = cli.get_tv_details(tid)
+        else:
+            resp = cli.get_movie_details(tid)
+        data = resp.json() if resp is not None else None
+        if isinstance(data, dict):
+            raw_poster = str(data.get("poster_path") or "").strip()
+            raw_backdrop = str(data.get("backdrop_path") or "").strip()
+            # poster_path 保存 TMDB 原始 path；poster_url 才拼尺寸前缀。
+            # 若上游已给完整 URL（如工单行里的 https://.../w500/xxx），不二次拼接。
+            meta["poster_path"] = raw_poster
+            meta["backdrop_path"] = raw_backdrop
+            meta["poster_url"] = (
+                raw_poster if raw_poster.startswith("http")
+                else f"{TMDB_IMAGE_BASE}/{TMDB_POSTER_SIZE}{raw_poster}" if raw_poster
+                else ""
+            )
+            meta["backdrop_url"] = (
+                raw_backdrop if raw_backdrop.startswith("http")
+                else f"{TMDB_IMAGE_BASE}/{TMDB_BACKDROP_SIZE}{raw_backdrop}" if raw_backdrop
+                else ""
+            )
+            meta["overview"] = str(data.get("overview") or "").strip()
+            meta["original_title"] = str(
+                data.get("original_title") or data.get("original_name") or ""
+            ).strip()
+    except Exception as e:
+        # 降级：任何异常都只记日志，返回空元数据，绝不阻断主流程
+        if logger:
+            logger.warning("[求片同步] TMDB 元数据补全失败 tmdb=%s type=%s: %s", tid, mt, e)
+
+    _TMDB_META_CACHE[key] = (now, dict(meta))
+    return meta
 
 
 class TgtoDriveClient:
@@ -480,6 +569,13 @@ class TgtoDriveClient:
         req = (rf.get("required") or "").strip()
         rule[required_key] = req
         rule[required_switch] = bool(req)
+
+        # 元数据补强（v2.2.0）：写入海报/背景/简介/原始标题，修复前端"正在匹配 TMDB"。
+        # 数据来源由调用方 push_items 通过 item["tmdb_meta"] 注入（_tmdb_meta 的结果）；
+        # 此处只做字段搬运（无网络副作用），item 未提供时写空串，与旧行为等价。
+        meta = item.get("tmdb_meta") or {}
+        for k in RULE_META_KEYS:
+            rule[k] = str(meta.get(k) or "")
         return rule
 
     # -------------------------------------------------------- 合并写（核心，只追加不删除）
@@ -612,12 +708,22 @@ class TgtoDriveClient:
                 "detail": f"HTTP {resp.status_code}: {resp.text[:200]}",
             }
 
+        # 回读校验（只读、不抛异常）：确认新规则已生效且未把其它规则写没。
+        # 失败仅记告警并在返回体标注 verified=False，绝不改 ok / 不改工单状态。
+        verified, vdetail = self.verify_write(
+            expect_added=added_ids, expect_total=len(existing)
+        )
+        if not verified and self._log:
+            self._log.warning("[求片同步] 推送回读校验未通过: %s", vdetail)
+
         return {
             "ok": True,
             "added": added_ids,
             "skipped": skipped_ids,
             "changed": True,
             "detail": f"已追加 {len(added_ids)} 条规则",
+            "verified": verified,
+            "verify_detail": vdetail,
         }
 
     # -------------------------------------------------------- 删单联动移除（v2.2.0）
@@ -716,8 +822,47 @@ class TgtoDriveClient:
                     "changed": False,
                     "detail": f"HTTP {resp.status_code}: {resp.text[:200]}"}
 
+        # 回读校验（只读、不抛异常）：确认目标规则已消失、保留规则未被误删。
+        verified, vdetail = self.verify_write(
+            expect_removed=removed, expect_total=len(kept)
+        )
+        if not verified and self._log:
+            self._log.warning("[求片同步] 删单联动回读校验未通过: %s", vdetail)
+
         return {"ok": True, "removed": removed, "kept_count": len(kept),
-                "changed": True, "detail": f"已移除 {len(removed)} 条规则"}
+                "changed": True, "detail": f"已移除 {len(removed)} 条规则",
+                "verified": verified, "verify_detail": vdetail}
+
+    # -------------------------------------------------------- 写入回读校验（v2.2.0 补强）
+    def verify_write(self, expect_added=None, expect_removed=None, expect_total=None):
+        """POST 成功后回读目标场景，确认写入真实生效、且未破坏其它规则。
+
+        依据资料库《TgtoDrive联动复用说明》第二节"固定四步"的第 4 步（回读校验）。
+        校验项：① 回读总数不少于写入前总数（防全量覆盖把别人规则写没）；
+        ② expect_added 中的 id 都出现；③ expect_removed 中的 id 都不出现。
+
+        安全约束：**只读、不抛异常**。GET 失败/结构未知一律返回
+        (False, 原因)，由调用方记告警即可，绝不回滚、绝不改业务状态、绝不阻断主流程。
+        返回 (ok: bool, detail: str)。
+        """
+        try:
+            cfg = self.get_config()
+            rules = self._extract_rules(cfg, self.scene)
+            ids = {self._safe_id(r) for r in rules}
+            problems = []
+            if expect_total is not None and len(rules) < expect_total:
+                problems.append("回读规则数 %d 少于写入前/预期 %d" % (len(rules), expect_total))
+            for rid in (expect_added or []):
+                if rid not in ids:
+                    problems.append("新增规则 %s 回读未见" % rid)
+            for rid in (expect_removed or []):
+                if rid in ids:
+                    problems.append("已删规则 %s 回读仍在" % rid)
+            if problems:
+                return False, "；".join(problems)
+            return True, "回读校验通过（%d 条）" % len(rules)
+        except Exception as e:
+            return False, "回读校验异常: %s" % e
 
     # -------------------------------------------------------- 探测
     def health_check(self):
@@ -859,16 +1004,26 @@ class TgWhitelistSyncPlugin(PluginBase):
             {
                 "key": "rule_resolution",
                 "label": "规则·分辨率",
-                "type": "text",
-                "placeholder": "4k",
-                "hint": "写入白名单规则的分辨率筛选，默认 4k（如改 1080p 自行填写）",
+                "type": "select",
+                "options": [
+                    {"value": "4k", "label": "4K（默认）"},
+                    {"value": "1080p", "label": "1080p"},
+                    {"value": "720p", "label": "720p"},
+                    {"value": "all", "label": "全部分辨率"},
+                ],
+                "hint": "写入白名单规则的分辨率筛选，默认 4k；枚举对齐 TgtoDrive norm_resolution",
             },
             {
                 "key": "rule_effect",
                 "label": "规则·画面效果",
-                "type": "text",
-                "placeholder": "all",
-                "hint": "画面效果筛选，all=全部效果；按 TgtoDrive 实际枚举填写",
+                "type": "select",
+                "options": [
+                    {"value": "all", "label": "全部效果（默认）"},
+                    {"value": "dolby", "label": "杜比视界 / Dolby"},
+                    {"value": "hdr", "label": "HDR"},
+                    {"value": "sdr", "label": "SDR"},
+                ],
+                "hint": "画面效果筛选，all=全部效果；枚举对齐 TgtoDrive norm_effect",
             },
             {
                 "key": "rule_required_keyword",
@@ -900,6 +1055,12 @@ class TgWhitelistSyncPlugin(PluginBase):
                     {"value": "envelope", "label": "envelope — 原样回写整个 GET 信封"},
                 ],
                 "hint": "GET /api/visual-filter/config 返回的是含 current/scenes 的信封。默认只把目标场景配置提取成扁平体写回；若现场后端要求完整信封（POST 400/规则不生效），切到 envelope",
+            },
+            {
+                "key": "tmdb_meta_enabled",
+                "label": "补全 TMDB 元数据（修复\"正在匹配 TMDB\"）",
+                "type": "toggle",
+                "hint": "默认开启：写入规则时从 TMDB 补全海报/背景/简介/原始标题，TgtoDrive 前端才会显示\"已匹配\"。需配置 TMDB API Key；未配置或查询失败时自动降级为空串、不阻断推送（存量规则需重采纳一次才补元数据）",
             },
             {
                 "key": "check_interval",
@@ -1055,6 +1216,12 @@ class TgWhitelistSyncPlugin(PluginBase):
         rule_required_field = raw_field or RULE_FIELD["required"]
         rule_required_switch = (cfg.get("rule_required_switch") or "").strip() or RULE_SWITCH["required"]
         write_mode = (cfg.get("write_mode") or "flat").strip() or "flat"
+        # TMDB 元数据补全开关：默认开启；关闭时不查 TMDB、字段写空串（等价旧行为）。
+        meta_enabled = cfg.get("tmdb_meta_enabled", True)
+        if meta_enabled in (False, "false", "0", 0, "no"):
+            meta_enabled = False
+        else:
+            meta_enabled = True
         if rule_fields["required"]:
             logger.info(
                 f"[求片同步] 必包含关键词写入 {rule_required_field}={rule_fields['required']!r} "
@@ -1084,6 +1251,8 @@ class TgWhitelistSyncPlugin(PluginBase):
             keyword = self._build_keyword(title, media_type, year, season, eps)
             if not keyword:
                 continue
+            # 元数据补全：失败自动降级空串（_tmdb_meta 内部兜住），不阻断本条工单推送
+            meta = _tmdb_meta(tmdb_id, media_type) if meta_enabled else {k: "" for k in RULE_META_KEYS}
             items.append({
                 "tmdb_id": tmdb_id,
                 "media_type": media_type,
@@ -1095,6 +1264,7 @@ class TgWhitelistSyncPlugin(PluginBase):
                 "rule_fields": rule_fields,
                 "rule_required_field": rule_required_field,
                 "rule_required_switch": rule_required_switch,
+                "tmdb_meta": meta,
             })
 
         if not items:

@@ -141,7 +141,7 @@ def http_get(url: str, limit: int, timeout: int = DEFAULT_TIMEOUT) -> bytes:
         assert_safe_url(current)
         req = urllib.request.Request(
             current,
-            headers={"User-Agent": "EmbyHub-PluginHub/2.6", "Accept": "*/*"},
+            headers={"User-Agent": "EmbyHub-PluginHub/2.7", "Accept": "*/*"},
             method="GET",
         )
         try:
