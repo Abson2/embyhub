@@ -450,9 +450,33 @@ class TgtoDriveClient:
         return h
 
     @staticmethod
-    def _rule_id(tmdb_id, season):
-        """生成白名单规则幂等 id，便于去重与回查。"""
-        return f"kw_{int(tmdb_id)}_{int(season or 0)}"
+    def _title_slug(title, max_len=40):
+        """由标题生成稳定的 slug，作为无 TMDB ID 时的幂等键骨架。
+
+        只保留字母/数字/下划线/中日韩文字，其余折叠为 '-'，小写并截长；
+        空标题兜底 'untitled'。纯字符串函数、无网络无副作用，便于测试。
+        """
+        text = re.sub(r"[^\w\u4e00-\u9fff]+", "-", str(title or "").strip().lower())
+        text = text.strip("-")[:max_len].strip("-")
+        return text or "untitled"
+
+    @classmethod
+    def _rule_id(cls, tmdb_id, season, title=None):
+        """生成白名单规则幂等 id，便于去重与回查。
+
+        - 有 TMDB ID（含历史 int 型）：`kw_<tmdb>_<season>`，**行为与旧版逐字一致**。
+        - 无 TMDB ID（0/None/空/非法字符串）：`kw_tg_<标题slug>`，对齐资料库
+          《TgtoDrive联动复用说明》第三节「无 TMDB ID 用 kw_<来源>_<标题slug>」兜底约定。
+          来源短标记用 `tg`（本插件来源），与规则 `source="tmdb"` 字段区分：后者是
+          TgtoDrive 结构化规则契约字段，verify_patches.py 有硬断言，不可改。
+        """
+        try:
+            tid = int(tmdb_id)
+        except (TypeError, ValueError):
+            tid = 0
+        if tid > 0:
+            return f"kw_{tid}_{int(season or 0)}"
+        return f"kw_tg_{cls._title_slug(title)}"
 
     @staticmethod
     def _safe_id(rule):
@@ -574,8 +598,10 @@ class TgtoDriveClient:
         尤其必须写入 required_keyword **并打开 include_required_keyword**，
         否则后端会把必包含关键词规范化成空串（bug2）。
         """
-        rid = self._rule_id(item["tmdb_id"], item["season"])
-        title = (item.get("title") or "").strip() or f"TMDB{item['tmdb_id']}"
+        rid = self._rule_id(item.get("tmdb_id"), item.get("season"), item.get("title"))
+        title = (item.get("title") or "").strip() or (
+            f"TMDB{item.get('tmdb_id')}" if item.get("tmdb_id") else "未命名求片"
+        )
         keyword = item["keyword"]
         # 字段名可由插件配置覆盖（TgtoDrive 改名时无需改代码）；默认已是附件实证真名
         required_key = item.get("rule_required_field") or RULE_FIELD["required"]
@@ -595,8 +621,9 @@ class TgtoDriveClient:
             "custom_regex": "",
             "rule_type": "structured",
             "source": "tmdb",
-            # 附件实证：tmdb_id / year 均为字符串，不是 int
-            "tmdb_id": str(item["tmdb_id"]),
+            # 附件实证：tmdb_id / year 均为字符串，不是 int。
+            # 无 TMDB ID 的兜底规则写空串（与元数据降级一致），不写 "None"/"0"。
+            "tmdb_id": str(item["tmdb_id"]) if item.get("tmdb_id") else "",
             "media_type": item.get("media_type") or "",
         }
         rf = item.get("rule_fields") or {}
@@ -689,7 +716,7 @@ class TgtoDriveClient:
         conflicted = []  # [{id, source, detail}]
         seen = set()
         for it in items:
-            rid = self._rule_id(it["tmdb_id"], it["season"])
+            rid = self._rule_id(it.get("tmdb_id"), it.get("season"), it.get("title"))
             if rid in existing_ids or rid in seen:
                 skipped_ids.append(rid)
                 # conflict 诊断：他人规则占了本项目幂等 id
@@ -995,6 +1022,11 @@ class TgWhitelistSyncPlugin(PluginBase):
         self._stats = {"total": 0, "success": 0, "failed": 0, "skipped": 0}
         self._state_file = None
         self._tmdb_cfg_fingerprint = None  # 配置变更时失效 TMDB 元数据缓存
+        # 独立同步态台账（v2.7 完善）：与工单业务 status 解耦。
+        # - _last_sync: 最近一次推送/删单的结构化诊断回执（applied/conflict/verified 等）
+        # - _sync_ledger: 按规则 id 记录每条规则的同步态，失败不再写进工单 status
+        self._last_sync = None
+        self._sync_ledger = {}
         self._load_state()
         self._setup_routes()
 
@@ -1058,6 +1090,10 @@ class TgWhitelistSyncPlugin(PluginBase):
                 self._stats = s.get(
                     "stats", {"total": 0, "success": 0, "failed": 0, "skipped": 0}
                 )
+                # 新增字段向后兼容：老状态文件没有这两项时保持空，不影响旧行为
+                self._last_sync = s.get("last_sync", None)
+                ledger = s.get("sync_ledger", {})
+                self._sync_ledger = ledger if isinstance(ledger, dict) else {}
         except Exception:
             pass
 
@@ -1074,6 +1110,8 @@ class TgWhitelistSyncPlugin(PluginBase):
                         "last_run": self._last_run,
                         "last_result": self._last_result,
                         "stats": self._stats,
+                        "last_sync": self._last_sync,
+                        "sync_ledger": self._sync_ledger,
                         "updated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
                     },
                     f,
@@ -1081,6 +1119,72 @@ class TgWhitelistSyncPlugin(PluginBase):
                 )
         except Exception:
             pass
+
+    # ------------------------------------------------------------ 独立同步态台账（v2.7 完善）
+    # 依据资料库《TgtoDrive联动复用说明》第五节「审核态 review_status 与同步态 status 解耦、
+    # 列表不把 failed 当业务态」。embyhub 的 media_requests 没有 review_status 列，
+    # 加列属高风险 schema 迁移（违反零功能回归铁律），故采用插件侧「独立同步台账」实现
+    # 同样的解耦效果：工单业务 status 只由核心流程改；同步成功/失败/冲突/跳过/移除
+    # 记在 _sync_ledger（按规则 id），最近一次回执记在 _last_sync，均落盘可重启回读。
+    SYNC_STATES = ("synced", "failed", "conflict", "skipped", "removed")
+    SYNC_LEDGER_MAX = 500  # 与 TMDB 元数据缓存同量级上限，防止 JSON 无限增长
+
+    def _sync_key(self, tmdb_id, season, title=None):
+        """台账键：优先规则 id（与白名单一致），无 TMDB ID 时用 slug 兜底。"""
+        return TgtoDriveClient._rule_id(tmdb_id, season, title)
+
+    def _record_sync_ledger(self, entries):
+        """把 [{key, state, detail, applied}] 合并进台账，淘汰最旧条目。
+
+        entries 里 state 必须是 SYNC_STATES 之一，否则忽略（防脏数据）。
+        """
+        now = time.strftime("%Y-%m-%d %H:%M:%S")
+        for e in entries or []:
+            key = e.get("key")
+            state = e.get("state")
+            if not key or state not in self.SYNC_STATES:
+                continue
+            rec = {"state": state, "at": now}
+            if e.get("detail"):
+                rec["detail"] = str(e["detail"])[:500]
+            if e.get("applied") is not None:
+                rec["applied"] = e["applied"]
+            self._sync_ledger[str(key)] = rec
+        if len(self._sync_ledger) > self.SYNC_LEDGER_MAX:
+            # 淘汰最旧的一批：至少 1/5，且保证淘汰后回落到上限内（防一次性大跳变）。
+            # 按 at 排序，保持 deterministic，O(n log n)。
+            over = len(self._sync_ledger) - self.SYNC_LEDGER_MAX
+            drop = max(over, max(1, self.SYNC_LEDGER_MAX // 5))
+            old = sorted(self._sync_ledger.items(), key=lambda kv: (kv[1].get("at") or ""))[:drop]
+            for k, _ in old:
+                self._sync_ledger.pop(k, None)
+
+    def _set_last_sync(self, kind, result, extra=None):
+        """保存最近一次结构化诊断回执（供管理端面板展示，不再只靠自由文本 last_result）。"""
+        diag = {
+            "kind": kind,
+            "at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "ok": bool(result.get("ok")),
+            "detail": str(result.get("detail") or "")[:500],
+            "added": list(result.get("added") or []),
+            "skipped": list(result.get("skipped") or []),
+            "removed": list(result.get("removed") or []),
+            "applied": result.get("applied") or [],
+            "conflicted": result.get("conflicted") or [],
+            "verified": result.get("verified"),
+            "verify_detail": result.get("verify_detail") or "",
+        }
+        if extra:
+            diag.update(extra)
+        self._last_sync = diag
+        return diag
+
+    def get_sync_states(self):
+        """返回可序列化的同步态快照（供 /status 与工单列表查询），只读不改状态。"""
+        return {
+            "last_sync": self._last_sync,
+            "ledger": dict(self._sync_ledger),
+        }
 
     # ------------------------------------------------------------ 配置表单
     def get_config_schema(self):
@@ -1421,6 +1525,13 @@ class TgWhitelistSyncPlugin(PluginBase):
             self._stats["failed"] += len(items)
             logger.warning(f"[求片同步] {self._last_result}")
             self.log(f"推送 TgtoDrive 失败: {e}", "warning", notify=True)
+            # 独立同步态：失败只记台账，绝不写进工单业务 status
+            self._set_last_sync("push", {"ok": False, "detail": str(e)})
+            self._record_sync_ledger([
+                {"key": self._sync_key(it.get("tmdb_id"), it.get("season"), it.get("title")),
+                 "state": "failed", "detail": str(e)}
+                for it in items
+            ])
             self._save_state()
             return {"ok": False, "detail": str(e)}
 
@@ -1430,6 +1541,12 @@ class TgWhitelistSyncPlugin(PluginBase):
             self._stats["failed"] += len(items)
             logger.warning(f"[求片同步] {self._last_result}")
             self.log(f"推送 TgtoDrive 失败: {result['detail']}", "warning", notify=True)
+            self._set_last_sync("push", result)
+            self._record_sync_ledger([
+                {"key": self._sync_key(it.get("tmdb_id"), it.get("season"), it.get("title")),
+                 "state": "failed", "detail": result["detail"]}
+                for it in items
+            ])
             self._save_state()
             return result
 
@@ -1461,6 +1578,25 @@ class TgWhitelistSyncPlugin(PluginBase):
         self._stats["total"] += len(items)
         self._stats["success"] += added_n
         self._stats["skipped"] += skipped_n
+        # 独立同步态台账：把 added/skipped/conflict/applied/verified 记到规则维度，
+        # 与工单业务 status 完全解耦；applied 参数快照随每条 added 规则落盘。
+        self._set_last_sync("push", result)
+        applied_by_id = {a.get("id"): a for a in (result.get("applied") or []) if isinstance(a, dict)}
+        conflict_ids = {c.get("id") for c in (result.get("conflicted") or []) if isinstance(c, dict)}
+        added_ids = set(result.get("added") or [])
+        ledger_entries = []
+        for it in items:
+            key = self._sync_key(it.get("tmdb_id"), it.get("season"), it.get("title"))
+            if key in conflict_ids:
+                ledger_entries.append({"key": key, "state": "conflict",
+                                       "detail": "他人规则占位，未写入未覆盖"})
+            elif key in added_ids:
+                ledger_entries.append({"key": key, "state": "synced",
+                                       "applied": applied_by_id.get(key)})
+            else:
+                ledger_entries.append({"key": key, "state": "skipped",
+                                       "detail": "规则已存在或无需写入"})
+        self._record_sync_ledger(ledger_entries)
         logger.info(f"[求片同步] {self._last_result}")
         if added_n:
             self.log(
@@ -1540,22 +1676,37 @@ class TgWhitelistSyncPlugin(PluginBase):
             self._stats["failed"] += len(rule_ids)
             logger.warning(f"[求片同步] {msg}")
             self.log(msg, "warning", notify=True)
+            self._set_last_sync("remove", {"ok": False, "detail": str(e)})
+            self._record_sync_ledger([
+                {"key": rid, "state": "failed", "detail": str(e)} for rid in rule_ids
+            ])
             self._save_state()
             return {"ok": False, "removed": [], "kept_count": 0,
                     "changed": False, "detail": str(e)}
 
         removed = result.get("removed") or []
         self._last_run = time.strftime("%Y-%m-%d %H:%M:%S")
+        self._set_last_sync("remove", result)
+        removed_set = set(removed)
         if not result.get("ok"):
             self._last_result = f"删单联动移除失败: {result.get('detail')}"
             self._stats["failed"] += len(rule_ids)
             logger.warning(f"[求片同步] {self._last_result}")
             self.log(self._last_result, "warning", notify=True)
+            self._record_sync_ledger([
+                {"key": rid, "state": "failed", "detail": result.get("detail")}
+                for rid in rule_ids
+            ])
         else:
             self._last_result = (
                 f"[删单联动] 目标 {len(rule_ids)} 条，已移除 {len(removed)} 条，"
                 f"保留其它规则 {result.get('kept_count', 0)} 条"
             )
+            self._record_sync_ledger([
+                {"key": rid, "state": "removed" if rid in removed_set else "skipped",
+                 "detail": "规则已从白名单移除" if rid in removed_set else "规则不在白名单"}
+                for rid in rule_ids
+            ])
             logger.info(f"[求片同步] {self._last_result}")
             if removed:
                 self.log(
@@ -1601,6 +1752,7 @@ class TgWhitelistSyncPlugin(PluginBase):
                     "thread_alive": bool(self._thread and self._thread.is_alive()),
                     "last_run": self._last_run,
                     "last_result": self._last_result,
+                    "last_sync": self._last_sync,
                     "stats": self._stats,
                     "configured": bool(
                         _resolve_base_url(cfg)
@@ -1613,6 +1765,21 @@ class TgWhitelistSyncPlugin(PluginBase):
                     "dry_run": cfg.get("dry_run") in (True, "true", "1", 1),
                 },
             }
+
+        @self.router.get("/sync_states")
+        async def api_sync_states(request: Request):
+            """同步态台账（管理员）：按规则 id 返回 synced/failed/conflict/skipped/removed。
+
+            供工单列表与管理端面板展示「同步态」——独立于工单业务 status，
+            失败不再被误当业务态。只读，不触发任何推送/删除。
+            """
+            if not request.session.get("user"):
+                return {"status": "error", "message": "未登录"}
+            from app.domains.users import public_service as user_service
+
+            if not user_service.is_admin_user(request):
+                return {"status": "error", "message": "需要管理员权限"}
+            return {"status": "success", "data": self.get_sync_states()}
 
         @self.router.post("/sync_now")
         async def api_sync_now(request: Request):

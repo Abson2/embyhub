@@ -13,6 +13,12 @@ TgtoDrive 联动增强版：求片同步插件写入质量提升，功能主体�
   - 年份补全：命令式求片未带 year 时，从 TMDB 详情的 `release_date` / `first_air_date` 补年份并打开 `include_year`，避免正则过滤漏条件。
   - conflict / applied 诊断回执：目标规则 id 被他人规则（source 非本项目）占有时标记 `conflict` 并给出 source/id，不写不覆盖；写入成功回执带 `applied` 参数快照（分辨率/效果/必含/年份），消除"前端说成功、用户以为没传"的诊断黑洞。
   - 回归：补强测试扩到 46 项，全量纯标准库回归仍 152/152 通过。
+- **2.7 插件中心联动完善（2026-11-20，版本号不变）**：依据最新复用经验把「插件中心 ↔ TgtoDrive」联动从插件后端贯通到管理端，功能与对外接口仍不变；需重新 pull 镜像生效。
+  - 幂等键兜底：工单无 TMDB ID（`0`/空/非法）时，用标题规范化 slug 生成 `kw_tg_<slug>` 幂等 id（对齐经验文档第三节「无 TMDB ID 用 `kw_<来源>_<标题slug>`」）；有 TMDB ID 时 id 仍是 `kw_<tmdb>_<season>`，逐字不变。
+  - 审核态 / 同步态解耦：工单业务 `status` 不再承载同步结果。插件侧新增**独立同步态台账**（`synced`/`failed`/`conflict`/`skipped`/`removed`），推送/删单的成功、失败、冲突、跳过按规则 id 落盘（上限 500、淘汰最旧），新增只读接口 `GET /api/plugins/tg_whitelist_sync/sync_states`。不改动 `media_requests` 表结构（避免高风险 schema 迁移）。
+  - 管理端诊断展示：插件中心「求片 → TgtoDrive 同步」面板新增「最近一次写入诊断」区块，展示 `applied` 参数快照（分辨率/效果/必含/年份）、`conflict` 冲突规则与 `verified` 回读结果；工单大厅列表按 `kw_<tmdb>_<season>` 合并台账，展示独立同步态徽标，失败/冲突不再被误当业务态。
+  - 真机验证清单：新增 `docs/TGTO_LIVE_VERIFY.md`，逐条列出经验文档第十节 4 项待真机验证项与判定标准。
+  - 回归：新增 `tests/test_tg_whitelist_plugin_hub.py`（41 项），全量纯标准库回归 153/153、verify_patches 281/281 通过；架构基线因管理端 UI 合法增行显式重采集。
 
 ## 2.6
 

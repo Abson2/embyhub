@@ -4,7 +4,7 @@
  "ensure_defs": 42,
  "execute_many_calls": 0,
  "inline_script_blocks": 44,
- "inline_script_lines": 24342,
+ "inline_script_lines": 24408,
  "js_files": 7,
  "js_lines": 4855,
  "longest_function_lines": 842,
@@ -12,9 +12,9 @@
  "loop_literal_regex_calls": 0,
  "provider_assembly_points": 78,
  "runtime_py_files": 370,
- "runtime_py_lines": 75143,
+ "runtime_py_lines": 75611,
  "template_files": 44,
- "template_lines": 42037,
+ "template_lines": 42139,
  "templates_with_inline_script": 31,
  "top5_longest": [
   {

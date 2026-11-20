@@ -210,6 +210,27 @@
                                     <span x-show="item.status === 4" class="text-purple-600 dark:text-purple-400 text-[10px] font-bold bg-purple-50 dark:bg-purple-500/10 px-2 py-1 rounded-md border border-purple-200/50 dark:border-purple-500/20 shadow-sm flex items-center gap-1.5 whitespace-nowrap"><span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>手动接单中</span>
                                     <span x-show="item.status === 2" class="text-blue-600 dark:text-blue-400 text-[10px] font-bold bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded-md border border-blue-200/50 dark:border-blue-500/20 shadow-sm whitespace-nowrap"><i class="fa-solid fa-check mr-1"></i>已入库</span>
                                     <span x-show="item.status === 3" class="text-red-500 text-[10px] font-bold bg-red-50 dark:bg-red-500/10 px-2 py-1 rounded-md border border-red-100 dark:border-red-500/20 shadow-sm whitespace-nowrap">已拒绝</span>
+                                    <!-- 独立同步态徽标（与业务 status 解耦，失败/冲突只在此提示） -->
+                                    <template x-if="item.tg_sync">
+                                        <span class="mt-1 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md whitespace-nowrap"
+                                              :class="{
+                                                'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/50': item.tg_sync.state === 'synced',
+                                                'text-sky-600 bg-sky-50 dark:bg-sky-500/10 border border-sky-200/50': item.tg_sync.state === 'removed',
+                                                'text-red-500 bg-red-50 dark:bg-red-500/10 border border-red-100': item.tg_sync.state === 'failed',
+                                                'text-amber-600 bg-amber-50 dark:bg-amber-500/10 border border-amber-200/50': item.tg_sync.state === 'conflict',
+                                                'text-gray-500 bg-gray-50 dark:bg-gray-800 border border-gray-200': item.tg_sync.state === 'skipped'
+                                              }"
+                                              :title="item.tg_sync.detail || ''">
+                                            <i class="fa-solid" :class="{
+                                                'fa-circle-check': item.tg_sync.state === 'synced',
+                                                'fa-trash': item.tg_sync.state === 'removed',
+                                                'fa-circle-xmark': item.tg_sync.state === 'failed',
+                                                'fa-triangle-exclamation': item.tg_sync.state === 'conflict',
+                                                'fa-minus-circle': item.tg_sync.state === 'skipped'
+                                              }"></i>
+                                            <span x-text="({synced:'已入白名单', removed:'已移除', failed:'同步失败', conflict:'规则冲突', skipped:'已跳过'})[item.tg_sync.state] || item.tg_sync.state"></span>
+                                        </span>
+                                    </template>
                                 </div>
                             </div>
                             
@@ -1328,12 +1349,30 @@ function showNotifyToast(message, type = 'success') {
                     const data = await res.json();
                     if (data.status === 'success') {
                         this.requests = data.data;
+                        // 求片同步 TgtoDrive 白名单：合并独立同步态台账（失败不当业务态）
+                        await this.attachTgSyncState();
                         // 🔥 数据更新后，如果当前页超出范围，重置到第一页
                         if (this.currentPage > this.totalPages) this.currentPage = 1;
                         const currentKeys = this.requests.map(r => r.tmdb_id + '_' + r.season);
                         this.selectedKeys = this.selectedKeys.filter(k => currentKeys.includes(k));
                     }
                 } catch (e) { console.error(e); }
+            },
+
+            // 只读拉取插件同步态台账，按 kw_<tmdb>_<season> 关联到工单。
+            // 插件未启用 / 未安装 / 接口异常时静默跳过，绝不影响工单列表加载。
+            async attachTgSyncState() {
+                try {
+                    const res = await fetch('/api/plugins/tg_whitelist_sync/sync_states');
+                    if (!res.ok) return;
+                    const d = await res.json();
+                    if (d.status !== 'success' || !d.data) return;
+                    const ledger = d.data.ledger || {};
+                    this.requests.forEach(r => {
+                        const key = 'kw_' + (r.tmdb_id || 0) + '_' + (r.season || 0);
+                        r.tg_sync = ledger[key] || null;
+                    });
+                } catch (e) { /* 插件未启用时接口不存在，静默忽略 */ }
             },
 
             async loadFeedback() {
