@@ -293,10 +293,43 @@ def _as_int(value, default=None):
 
 
 # TMDB 元数据进程内缓存：key=(tmdb_id, media_type)，value=(timestamp, meta)。
-# 作用有二：① 同一批/短期内重复工单不重复打 TMDB（限流，对齐经验文档"SCAN 场景限流"）；
-# ② 无 TMDB 密钥/查询失败时缓存空结果，避免每条规则都触发一次失败请求。
+# 依据资料库《TgtoDrive联动复用说明》最新复用版（v0.9.20 整改完成版）第六节 +
+# 阶段五 B-07：TTL 24h + 硬上限 500（超限时淘汰最旧的 1/5）；**只缓存成功取到
+# 数据的结果**，全空结果不缓存（避免把 TMDB 临时抖动固化 24h）；配置变更时调
+# clear_tmdb_meta_cache() 立即失效。命中缓存不消耗限流配额、不发网络。
 _TMDB_META_CACHE = {}
-_TMDB_META_TTL = 6 * 3600  # 6 小时；元数据变化极慢，缓存足够安全
+_TMDB_META_TTL = 24 * 3600  # 24 小时（阶段五 B-07）
+_TMDB_META_MAX = 500        # 硬上限；超限淘汰最旧的 1/5
+
+
+def _tmdb_meta_cache_get(key, now=None):
+    """命中返回 meta 副本，未命中/过期返回 None。命中不发网络、不消耗限流。"""
+    cached = _TMDB_META_CACHE.get(key)
+    if not cached:
+        return None
+    now = time.time() if now is None else now
+    if (now - cached[0]) >= _TMDB_META_TTL:
+        _TMDB_META_CACHE.pop(key, None)  # 顺手清掉过期项
+        return None
+    return dict(cached[1])
+
+
+def _tmdb_meta_cache_put(key, meta, now=None):
+    """只缓存成功取到数据的结果；全空结果不缓存，避免固化临时抖动。"""
+    if not any(str(v or "").strip() for v in meta.values()):
+        return
+    now = time.time() if now is None else now
+    _TMDB_META_CACHE[key] = (now, dict(meta))
+    if len(_TMDB_META_CACHE) > _TMDB_META_MAX:
+        # 淘汰最旧的 1/5（按写入时间升序），保留近期热数据
+        drop = max(1, _TMDB_META_MAX // 5)
+        for old_key in sorted(_TMDB_META_CACHE, key=lambda k: _TMDB_META_CACHE[k][0])[:drop]:
+            _TMDB_META_CACHE.pop(old_key, None)
+
+
+def clear_tmdb_meta_cache():
+    """TMDB 配置（密钥/代理）变更时调用，立即失效全部元数据缓存。"""
+    _TMDB_META_CACHE.clear()
 
 
 def _tmdb_meta(tmdb_id, media_type, client=None):
@@ -307,9 +340,14 @@ def _tmdb_meta(tmdb_id, media_type, client=None):
     backdrop_url(w780)。任何失败（无客户端/无密钥/网络异常/字段缺失）都返回
     6 个字段的空串，绝不抛异常、绝不阻断求片审核写入（降级不阻断）。
 
+    同时提取 year（release_date / first_air_date 前 4 位），供调用方在工单
+    未带 year 时补全（新经验 v0.9.17「参数黑洞」修复）；year 单独返回，不写入
+    RULE_META_KEYS（规则年份字段由 build_rule 处理）。
+
     参数 client 便于测试注入假 TMDB 客户端；不传则用模块级 tmdb_client。
     """
     empty = {k: "" for k in RULE_META_KEYS}
+    empty["year"] = ""
     try:
         tid = int(tmdb_id)
     except (TypeError, ValueError):
@@ -320,10 +358,9 @@ def _tmdb_meta(tmdb_id, media_type, client=None):
 
     mt = str(media_type or "movie").strip().lower()
     key = (tid, mt)
-    now = time.time()
-    cached = _TMDB_META_CACHE.get(key)
-    if cached and (now - cached[0]) < _TMDB_META_TTL:
-        return dict(cached[1])
+    hit = _tmdb_meta_cache_get(key)
+    if hit is not None:
+        return hit
 
     meta = dict(empty)
     try:
@@ -353,12 +390,19 @@ def _tmdb_meta(tmdb_id, media_type, client=None):
             meta["original_title"] = str(
                 data.get("original_title") or data.get("original_name") or ""
             ).strip()
+            # 年份补全：movie 取 release_date，tv 取 first_air_date
+            raw_date = str(
+                data.get("release_date") or data.get("first_air_date") or ""
+            ).strip()
+            meta["year"] = raw_date[:4] if len(raw_date) >= 4 and raw_date[:4].isdigit() else ""
     except Exception as e:
         # 降级：任何异常都只记日志，返回空元数据，绝不阻断主流程
         if logger:
             logger.warning("[求片同步] TMDB 元数据补全失败 tmdb=%s type=%s: %s", tid, mt, e)
 
-    _TMDB_META_CACHE[key] = (now, dict(meta))
+    # 只缓存成功结果（空结果不缓存），按新经验阶段五 B-07。
+    # year 一并缓存：它来自同一份 TMDB 详情，命中/未命中返回结构须一致。
+    _tmdb_meta_cache_put(key, meta)
     return meta
 
 
@@ -630,26 +674,49 @@ class TgtoDriveClient:
         existing = list(container.get("rules") or [])
         existing_ids = {self._safe_id(r) for r in existing}
 
+        # existing_by_id 用于 conflict 诊断：判断已占位规则的来源是否属于本项目。
+        # embyhub 写入的结构化规则 source="tmdb"；若同 id 规则的 source 不是它，
+        # 视为他人规则占位（conflict），只诊断、不写、不覆盖（零功能变化）。
+        existing_by_id = {}
+        for r in existing:
+            if isinstance(r, dict):
+                existing_by_id[self._safe_id(r)] = str(r.get("source") or "")
+        OWN_SOURCE = "tmdb"
+
         new_rules = []
         added_ids = []
         skipped_ids = []
+        conflicted = []  # [{id, source, detail}]
         seen = set()
         for it in items:
             rid = self._rule_id(it["tmdb_id"], it["season"])
             if rid in existing_ids or rid in seen:
                 skipped_ids.append(rid)
+                # conflict 诊断：他人规则占了本项目幂等 id
+                occupied_source = existing_by_id.get(rid)
+                if occupied_source is not None and occupied_source != OWN_SOURCE:
+                    conflicted.append({
+                        "id": rid,
+                        "source": occupied_source,
+                        "detail": f"规则 id={rid} 已被 source={occupied_source!r} 占位，非本项目规则，未写入也未覆盖",
+                    })
                 continue
             seen.add(rid)
             new_rules.append(self.build_rule(it))
             added_ids.append(rid)
 
         if not new_rules:
+            detail = "白名单已包含所有目标，无需改动"
+            if conflicted:
+                detail += "；其中 %d 条遇他人规则占位（已跳过，未覆盖）" % len(conflicted)
             return {
                 "ok": True,
                 "added": [],
                 "skipped": skipped_ids,
                 "changed": False,
-                "detail": "白名单已包含所有目标，无需改动",
+                "detail": detail,
+                "conflicted": conflicted,
+                "applied": [],
             }
 
         # 坑①：保留所有现有规则（含用户规则），仅追加新的 kw_ 规则 —— 绝不删除任何已有规则
@@ -715,15 +782,36 @@ class TgtoDriveClient:
         )
         if not verified and self._log:
             self._log.warning("[求片同步] 推送回读校验未通过: %s", vdetail)
+        if conflicted and self._log:
+            for c in conflicted:
+                self._log.warning("[求片同步] %s", c["detail"])
+
+        # applied：本次真实写入的参数快照，杜绝"前端说成功、用户以为没传"的诊断黑洞。
+        applied = []
+        for rule in new_rules:
+            applied.append({
+                "id": rule.get("id"),
+                "resolution": rule.get("resolution"),
+                "effect": rule.get("effect"),
+                "required_keyword": rule.get("required_keyword"),
+                "include_required_keyword": rule.get("include_required_keyword"),
+                "year": rule.get("year"),
+                "include_year": rule.get("include_year"),
+            })
+        detail = f"已追加 {len(added_ids)} 条规则"
+        if conflicted:
+            detail += "；%d 条遇他人规则占位（未覆盖）" % len(conflicted)
 
         return {
             "ok": True,
             "added": added_ids,
             "skipped": skipped_ids,
             "changed": True,
-            "detail": f"已追加 {len(added_ids)} 条规则",
+            "detail": detail,
             "verified": verified,
             "verify_detail": vdetail,
+            "conflicted": conflicted,
+            "applied": applied,
         }
 
     # -------------------------------------------------------- 删单联动移除（v2.2.0）
@@ -906,8 +994,39 @@ class TgWhitelistSyncPlugin(PluginBase):
         self._last_result = None
         self._stats = {"total": 0, "success": 0, "failed": 0, "skipped": 0}
         self._state_file = None
+        self._tmdb_cfg_fingerprint = None  # 配置变更时失效 TMDB 元数据缓存
         self._load_state()
         self._setup_routes()
+
+    def _get_config(self):
+        """覆写：配置变更（含 tmdb_meta_enabled 开关 / TMDB 密钥）时立即清元数据缓存。
+
+        依据新经验「配置变更即失效」：指纹变化只触发一次 clear，正常读取零开销。
+        """
+        cfg = super()._get_config()
+        try:
+            tmdb_key = ""
+            try:
+                from app.infra.config.tmdb_settings import get_tmdb_api_key
+                tmdb_key = get_tmdb_api_key() or ""
+            except Exception:
+                pass
+            fp = (
+                tuple(sorted((k, str(v)) for k, v in cfg.items()
+                             if k in ("tmdb_meta_enabled", "tgtdrive_scene"))),
+                tmdb_key,  # 密钥内容变化也失效（仅内存比较，不落盘/不打印）
+                os.environ.get("EMBYPULSE_CONFIG_DIR", ""),
+            )
+            if self._tmdb_cfg_fingerprint is None:
+                self._tmdb_cfg_fingerprint = fp
+            elif fp != self._tmdb_cfg_fingerprint:
+                self._tmdb_cfg_fingerprint = fp
+                clear_tmdb_meta_cache()
+                if logger:
+                    logger.info("[求片同步] TMDB 相关配置已变更，元数据缓存已失效")
+        except Exception:
+            pass  # 指纹检测失败不应影响配置读取
+        return cfg
 
     # ------------------------------------------------------------ 运行态持久化
     def _resolve_state_file(self):
@@ -1248,11 +1367,17 @@ class TgWhitelistSyncPlugin(PluginBase):
             media_type = _row_get(row, "media_type")
             year = _row_get(row, "year")
             eps = _row_get(row, "episodes") or ""
+            # 元数据补全：失败自动降级空串（_tmdb_meta 内部兜住），不阻断本条工单推送
+            meta = _tmdb_meta(tmdb_id, media_type) if meta_enabled else {k: "" for k in RULE_META_KEYS}
+            # 年份补全（新经验 v0.9.17「参数黑洞」）：命令式求片不带 year 时，
+            # 从 TMDB 详情补 year，避免 include_year 关掉、正则过滤不准。
+            if not str(year or "").strip() and meta.get("year"):
+                year = str(meta["year"]).strip()
+                if logger:
+                    logger.info("[求片同步] 工单缺年份，已从 TMDB 补全 tmdb=%s year=%s", tmdb_id, year)
             keyword = self._build_keyword(title, media_type, year, season, eps)
             if not keyword:
                 continue
-            # 元数据补全：失败自动降级空串（_tmdb_meta 内部兜住），不阻断本条工单推送
-            meta = _tmdb_meta(tmdb_id, media_type) if meta_enabled else {k: "" for k in RULE_META_KEYS}
             items.append({
                 "tmdb_id": tmdb_id,
                 "media_type": media_type,

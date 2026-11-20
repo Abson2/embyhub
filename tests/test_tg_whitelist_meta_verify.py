@@ -137,7 +137,10 @@ SPEC.loader.exec_module(mod)
 # ============================================================
 print("\n== 1. TMDB 元数据补全 ==")
 class _Resp:
-    def __init__(self, data): self._data = data
+    def __init__(self, data, status_code=200):
+        self._data = data
+        self.status_code = status_code
+        self.text = ""
     def json(self): return self._data
 
 class FakeTmdb:
@@ -278,6 +281,114 @@ check([o["value"] for o in res["options"]] == ["4k", "1080p", "720p", "all"],
 check(eff["type"] == "select", "画面效果改为 select 下拉")
 check([o["value"] for o in eff["options"]] == ["all", "dolby", "hdr", "sdr"],
       f"画面效果枚举正确: {[o['value'] for o in eff['options']]}")
+
+
+# ============================================================
+print("\n== 4. 最新经验：缓存层升级（v0.9.20 阶段五 B-07）==")
+check(mod._TMDB_META_TTL == 24 * 3600, f"TTL 为 24h: {mod._TMDB_META_TTL}")
+check(mod._TMDB_META_MAX == 500, f"缓存硬上限 500: {mod._TMDB_META_MAX}")
+check(hasattr(mod, "clear_tmdb_meta_cache"), "提供 clear_tmdb_meta_cache 失效接口")
+check(hasattr(mod, "_tmdb_meta_cache_get") and hasattr(mod, "_tmdb_meta_cache_put"),
+      "提供 _tmdb_meta_cache_get/put（对齐代码地图）")
+
+# 空结果不缓存：全空 meta 调 put 后缓存仍为空
+mod.clear_tmdb_meta_cache()
+mod._tmdb_meta_cache_put((900, "movie"), {k: "" for k in mod.RULE_META_KEYS})
+check(len(mod._TMDB_META_CACHE) == 0, "全空结果不缓存（避免固化临时抖动）")
+# 成功结果缓存
+mod._tmdb_meta_cache_put((901, "movie"), {"poster_path": "/x.jpg", "year": "2026"})
+check(len(mod._TMDB_META_CACHE) == 1, "成功结果才缓存")
+# clear 接口生效
+mod.clear_tmdb_meta_cache()
+check(len(mod._TMDB_META_CACHE) == 0, "clear_tmdb_meta_cache 清空全部缓存")
+# 超限淘汰 1/5：塞入 505 条，淘汰后应 <= 500 且保留最近的
+mod.clear_tmdb_meta_cache()
+for i in range(505):
+    mod._tmdb_meta_cache_put((2000 + i, "movie"), {"poster_path": "/p%d.jpg" % i}, now=1000 + i)
+check(len(mod._TMDB_META_CACHE) <= mod._TMDB_META_MAX,
+      f"超限后缓存数 <= 500: {len(mod._TMDB_META_CACHE)}")
+check((2504, "movie") in mod._TMDB_META_CACHE, "淘汰最旧的 1/5，保留近期热数据")
+
+# 配置变更触发缓存失效：插件 _get_config 指纹变化
+mod.clear_tmdb_meta_cache()
+mod._tmdb_meta_cache_put((3000, "movie"), {"poster_path": "/y.jpg"})
+pinst = mod.TgWhitelistSyncPlugin()
+pinst.set_config({"tmdb_meta_enabled": True})
+pinst._get_config()  # 首次建立指纹
+pinst.set_config({"tmdb_meta_enabled": False})
+pinst._get_config()  # 指纹变化 -> clear
+check(len(mod._TMDB_META_CACHE) == 0, "配置变更后 _get_config 自动清缓存")
+
+
+# ============================================================
+print("\n== 5. 最新经验：年份补全（v0.9.17 参数黑洞修复）==")
+mod.clear_tmdb_meta_cache()
+cli_year = FakeTmdb({"poster_path": "/a.jpg", "release_date": "2024-03-15"})
+meta_year = mod._tmdb_meta(555, "movie", client=cli_year)
+check(meta_year.get("year") == "2024", f"movie 从 release_date 补年份: {meta_year.get('year')}")
+mod.clear_tmdb_meta_cache()
+cli_year_tv = FakeTmdb({"poster_path": "/b.jpg", "first_air_date": "2022-11-01"})
+meta_year_tv = mod._tmdb_meta(556, "tv", client=cli_year_tv)
+check(meta_year_tv.get("year") == "2022", f"tv 从 first_air_date 补年份: {meta_year_tv.get('year')}")
+# include_year 开关由 build_rule 依据 year  bool 决定（既有逻辑）
+item_year = {"tmdb_id": 555, "season": 0, "title": "T", "keyword": "T", "year": "2024",
+             "media_type": "movie", "rule_fields": {"resolution": "4k", "effect": "all", "required": "265"}}
+r_year = client.build_rule(item_year)
+check(r_year.get("year") == "2024" and r_year.get("include_year") is True,
+      "年份写入并打开 include_year 开关")
+
+
+# ============================================================
+print("\n== 6. 最新经验：conflict / applied 诊断回执 ==")
+# 构造 client：GET 返回含他人规则占位；POST 捕获；注入 _tmdb_meta 关闭走空
+c2 = mod.TgtoDriveClient("http://tg", "tok", "/api/visual-filter/config", "ENV_FILTER_GUANGYA")
+c2.verify_write = lambda **kw: (True, "ok")  # 跳过回读网络
+c2._url = lambda: "http://tg/api/visual-filter/config"
+c2._headers = lambda: {}
+# 目标 id kw_700_0 被他人规则(source=manual)占位；另一个新 id kw_701_0 可写
+c2.get_config = lambda: {"rules": [
+    {"id": "kw_700_0", "title": "Others", "keywords": ["X"], "source": "manual"},
+]}
+posted = {}
+def _post_capture(url, **kw):
+    posted["payload"] = kw.get("json")
+    return _Resp({"ok": True})
+mod.requests.post = _post_capture
+items = [
+    {"tmdb_id": 700, "season": 0, "title": "Occupied", "keyword": "Occupied",
+     "media_type": "movie", "year": "2020", "tmdb_meta": {}},
+    {"tmdb_id": 701, "season": 0, "title": "Fresh", "keyword": "Fresh",
+     "media_type": "movie", "year": "2021",
+     "rule_fields": {"resolution": "4k", "effect": "all", "required": "265"},
+     "tmdb_meta": {}},
+]
+res = c2.merge_and_save(items)
+check(any(c.get("id") == "kw_700_0" for c in (res.get("conflicted") or [])),
+      "他人规则占位 id 标记为 conflict")
+check((res.get("conflicted") or [{}])[0].get("source") == "manual",
+      "conflict 回执带占位规则的 source")
+check("kw_700_0" in [r["id"] for r in posted.get("payload", {}).get("rules", [])]
+      and posted["payload"]["rules"][0].get("source") == "manual",
+      "conflict 规则原样保留，未被覆盖（零功能变化）")
+applied = res.get("applied") or []
+check(len(applied) == 1 and applied[0].get("id") == "kw_701_0",
+      "applied 只记录本次真实写入的规则")
+check(applied and applied[0].get("resolution") == "4k"
+      and applied[0].get("required_keyword") == "265"
+      and applied[0].get("year") == "2021",
+      "applied 带分辨率/效果/必含/年份参数快照")
+# 全部 conflict 时不应 POST
+c3 = mod.TgtoDriveClient("http://tg", "tok", "/api/visual-filter/config", "ENV_FILTER_GUANGYA")
+c3.get_config = lambda: {"rules": [{"id": "kw_800_0", "source": "manual", "keywords": []}]}
+c3.verify_write = lambda **kw: (True, "ok")
+c3._url = lambda: "http://tg/api/visual-filter/config"
+c3._headers = lambda: {}
+posted.clear()
+mod.requests.post = lambda url, **kw: (posted.setdefault("called", True) or _Resp({"ok": True}))
+res3 = c3.merge_and_save([{"tmdb_id": 800, "season": 0, "title": "X", "keyword": "X",
+                           "media_type": "movie", "year": "", "tmdb_meta": {}}])
+check("called" not in posted and res3.get("changed") is False,
+      "全部 conflict 时不 POST（零净改动）")
 
 print(f"\n==== 结果：通过 {PASS} / 失败 {FAIL} ====")
 sys.exit(1 if FAIL else 0)
